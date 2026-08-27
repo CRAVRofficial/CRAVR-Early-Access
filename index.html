@@ -17,24 +17,45 @@
 
   <div class="noise" aria-hidden="true"></div>
 
-  <header class="site-header" data-site-header>
+  <!-- Fester Kopfbereich: immer sichtbar, enthaelt nur zwei unsichtbare
+       Zielmarken. Logo und Button "docken" dort per Scroll-Animation an,
+       siehe .logo-fly / .cta-fly weiter unten. -->
+  <header class="site-header">
     <div class="site-header-inner">
-      <img class="logo-mark" src="assets/logo.svg" alt="CRAVR" width="40" height="40">
+      <span class="header-slot header-slot-logo" data-header-logo-slot></span>
+      <span class="header-slot header-slot-cta" data-header-cta-slot></span>
     </div>
   </header>
 
+  <!-- Die tatsaechlich sichtbaren, beweglichen Elemente. Fixiert positioniert,
+       ihre Position/Groesse wird per Scroll-Fortschritt berechnet (script.js).
+       Ohne JavaScript oder bei reduzierter Bewegung bleiben sie unsichtbar,
+       die Ankerpunkte in Intro und Hero uebernehmen dann die Anzeige. -->
+  <img class="logo-fly" data-logo-fly src="assets/logo.svg" alt="CRAVR" width="40" height="40">
+  <a class="ghost-button cta-fly" data-cta-fly href="#anmeldung">Platz sichern</a>
+
   <main>
 
-    <!-- Hero: Architekturbild, zentriert, grosses Logo mit Eingangsanimation -->
+    <!-- Intro: nur das Logo, gross. Materialisiert beim Laden, danach
+         automatischer Weiterscroll zum Hauptbereich (script.js). -->
+    <section class="intro-stage" data-intro-stage>
+      <img class="hero-image" src="assets/hero-architektur.jpg" alt="" width="1536" height="1024">
+      <div class="hero-scrim" aria-hidden="true"></div>
+      <div class="intro-content">
+        <img class="logo-anchor" data-logo-anchor src="assets/logo.svg" alt="CRAVR" width="92" height="92">
+      </div>
+    </section>
+
+    <!-- Hero: Headline, Subline, CTA. Teilt sich das Architekturbild mit dem
+         Intro fuer einen nahtlosen Eindruck. -->
     <section class="hero" data-hero>
       <img class="hero-image" src="assets/hero-architektur.jpg" alt="" width="1536" height="1024">
       <div class="hero-scrim" aria-hidden="true"></div>
 
       <div class="hero-content">
-        <img class="hero-logo-big" src="assets/logo.svg" alt="CRAVR" width="92" height="92">
         <h1 class="hero-headline">CRAVR kommt.</h1>
         <p class="hero-subline">Ein Premium-Journal für Disziplin. Kein Motivationsbuch. Dein Ritual, Tag für Tag.</p>
-        <a class="ghost-button" href="#anmeldung">Platz sichern</a>
+        <a class="ghost-button cta-anchor" data-cta-anchor href="#anmeldung">Platz sichern</a>
       </div>
     </section>
 
@@ -112,7 +133,7 @@
     <!-- Verknappung: macht das Geheimnis zum Grund für die Eintragung -->
     <section class="section section-open reveal">
       <div class="section-inner">
-        <h2 class="section-headline">Der Rest bleibt unser Geheimnis.</h2>
+        <h2 class="section-headline">Das Beste kommt zum Schluss.</h2>
         <p class="section-body">Die genaue Struktur hinter CRAVR, Tagesanzahl und Phasenaufbau, zeigen wir erst zum Start. Wer sich jetzt einträgt, erfährt es zuerst.</p>
       </div>
     </section>
@@ -143,7 +164,7 @@
             </div>
 
             <fieldset class="price-signal">
-              <legend>Was wäre dir ein Journal wie dieses wert? <span class="optional">(optional)</span></legend>
+              <legend>Was wäre dir das CRAVR-Paket wert? <span class="optional">(optional)</span></legend>
               <div class="price-options">
                 <label class="price-option">
                   <input type="radio" name="PRICE_SIGNAL" value="unter_30">
