@@ -243,7 +243,14 @@ a {
   max-width: var(--max-width);
   margin: 0 auto;
   width: 100%;
-  min-height: 100vh;
+  /* Bewusst deutlich kuerzer als eine volle Bildschirmhoehe: nach dem
+     automatischen Weiterscroll aus dem Logo-Streifen soll am unteren Rand
+     bereits die Spitze der naechsten Textzeile hereinragen (nicht nur
+     dessen leerer Rand). Reine Farbaenderung reicht hier nicht als Signal,
+     da der Hero unten ohnehin ins Dunkle ausblendet - ein paar sichtbare
+     Buchstaben sind ein deutlich staerkerer, unaufdringlicher Hinweis auf
+     "hier geht es weiter" als ein Scroll-Pfeil oder Hinweistext. */
+  min-height: 80vh;
   padding: clamp(24px, 6vh, 64px) var(--edge) clamp(48px, 8vh, 96px);
   display: flex;
   flex-direction: column;
