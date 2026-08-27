@@ -237,9 +237,39 @@ a {
 }
 
 .logo-anchor {
-  width: clamp(150px, 20vw, 260px);
+  /* Groesser als zuvor: das Logo enthaelt jetzt zusaetzlich Schriftzug und
+     Lorbeerkranz (siehe assets/logo.svg), auf Bennetts Wunsch praesenter. */
+  width: clamp(200px, 28vw, 340px);
   height: auto;
   filter: drop-shadow(0 2px 4px rgb(10 10 10 / 70%)) drop-shadow(0 0 26px rgb(10 10 10 / 65%));
+  /* Eingangsanimation beim ersten Laden: sanftes Herauswachsen aus der
+     Mitte mit einem goldenen Aufgluehen, das in den normalen Schatten
+     ausklingt. cubic-bezier(0.16,1,0.3,1) bremst weich ohne Ueberschwingen
+     ("expo-out"), bewusst kein Drehen oder Wippen, das sollte edel wirken,
+     nicht verspielt. */
+  animation: logo-entrance 1.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes logo-entrance {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+    filter: drop-shadow(0 2px 4px rgb(10 10 10 / 70%)) drop-shadow(0 0 60px rgb(184 154 90 / 85%));
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: drop-shadow(0 2px 4px rgb(10 10 10 / 70%)) drop-shadow(0 0 26px rgb(10 10 10 / 65%));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-anchor {
+    animation: none;
+  }
 }
 
 .hero-content {
