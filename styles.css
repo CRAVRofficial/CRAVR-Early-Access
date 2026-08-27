@@ -225,14 +225,14 @@ a {
 .hero-logo-zone {
   position: relative;
   z-index: 2;
-  height: clamp(220px, 34vh, 380px);
+  height: clamp(260px, 38vh, 440px);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .logo-anchor {
-  width: clamp(110px, 15vw, 190px);
+  width: clamp(150px, 20vw, 260px);
   height: auto;
   filter: drop-shadow(0 2px 4px rgb(10 10 10 / 70%)) drop-shadow(0 0 26px rgb(10 10 10 / 65%));
 }
@@ -272,11 +272,26 @@ a {
 }
 
 /* ---- Fliegendes Logo und fliegender Button ----
-   Beide sind fest positioniert und unsichtbar, bis script.js ihre Anker
-   (.logo-anchor, .cta-anchor) und Zielpunkte (.header-slot-*) vermessen
-   hat. Danach folgen sie dem Scroll-Fortschritt per transform, siehe
-   dort. Ohne JavaScript oder bei reduzierter Bewegung bleiben sie leer,
-   die Anker selbst tragen dann die sichtbare Darstellung. */
+   Beide sind fest positioniert, ihre Position/Groesse wird per
+   Scroll-Fortschritt berechnet (script.js). Ohne JavaScript oder bei
+   reduzierter Bewegung bleiben sie leer, die Anker selbst tragen dann die
+   sichtbare Darstellung.
+
+   Das Logo fliegt vom allerersten Scroll-Pixel an (kein Ruhepunkt vorher),
+   sein Anker bleibt darum durchgehend unsichtbar, sobald JavaScript
+   uebernimmt. Der Button dagegen soll waehrend des gesamten Verweilens im
+   Hero ganz normal mit der Seite scrollen, nicht ueber ein fixiertes,
+   staendig per Skript aktualisiertes Element - das fuehrt auf iOS Safari
+   zu sichtbarem Zittern. Darum bleibt sein Anker sichtbar und das fliegende
+   Element unsichtbar, bis der eigentliche Flug beginnt; script.js schaltet
+   dort testfrei um (siehe .cta-anchor-hidden / .cta-fly-visible).
+
+   Die Bildgroesse des Logos ist bewusst groesszuegig (siehe --logo-native
+   Nutzung in script.js): ein SVG, das als <img> geladen wird, rastert der
+   Browser einmalig in der aktuellen CSS-Groesse. Skaliert man es per
+   transform anschliessend groesser, vergroessert man dieses Rasterbild und
+   es wirkt unscharf. Start immer groesser als jede sichtbare Zielgroesse,
+   nur verkleinert (nie vergroessert) halten es gestochen scharf. */
 
 .logo-fly,
 .cta-fly {
@@ -290,22 +305,29 @@ a {
 }
 
 .logo-fly {
-  width: 40px;
-  height: 40px;
+  width: 320px;
+  height: 320px;
 }
 
 .cta-fly {
   white-space: nowrap;
 }
 
-body.js-flying .logo-fly,
-body.js-flying .cta-fly {
+body.js-flying .logo-fly {
   opacity: 1;
   pointer-events: auto;
 }
 
-body.js-flying .logo-anchor,
-body.js-flying .cta-anchor {
+body.js-flying .logo-anchor {
+  visibility: hidden;
+}
+
+body.js-flying .cta-fly-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+body.js-flying .cta-anchor-hidden {
   visibility: hidden;
 }
 
@@ -426,43 +448,53 @@ body.js-flying .cta-anchor {
 .bundle-scroller {
   position: relative;
   background: var(--rich-black);
+  overflow: hidden;
 }
+
+/* Der Lichtschimmer sitzt bewusst INNERHALB der gepinnten Flaeche, nicht im
+   sehr hohen Scroller selbst: waere er dort absolut positioniert, laege er
+   grossteils ausserhalb des kleinen Fensters, das die Sticky-Technik gerade
+   zeigt, und war praktisch nie zu sehen. So bleibt er immer im Bild, kreist
+   langsam um das Textfeld herum, ohne die Schrift zu verdecken. */
 
 .bundle-glow {
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  overflow: hidden;
-  background: radial-gradient(560px circle at var(--glow-x, 30%) var(--glow-y, 35%), rgb(184 154 90 / 15%), transparent 62%);
-  animation: bundle-glow-drift 24s ease-in-out infinite alternate;
+  overflow: visible;
+  transform-origin: 50% 50%;
+  animation: bundle-glow-spin 48s linear infinite;
 }
 
-@keyframes bundle-glow-drift {
-  0% {
-    --glow-x: 18%;
-    --glow-y: 28%;
-  }
-  50% {
-    --glow-x: 78%;
-    --glow-y: 58%;
-  }
-  100% {
-    --glow-x: 42%;
-    --glow-y: 82%;
+.bundle-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(4px);
+  background: radial-gradient(circle, rgb(212 180 112 / 85%) 0%, rgb(184 154 90 / 38%) 50%, transparent 76%);
+}
+
+.bundle-orb-1 { width: 15vh; height: 15vh; top: 10%;  left: 10%; }
+.bundle-orb-2 { width: 8vh;  height: 8vh;  top: 16%;  right: 12%; }
+.bundle-orb-3 { width: 11vh; height: 11vh; bottom: 18%; left: 7%; }
+.bundle-orb-4 { width: 7vh;  height: 7vh;  bottom: 10%; right: 16%; }
+.bundle-orb-5 { width: 9vh;  height: 9vh;  top: 46%;  left: 4%; }
+.bundle-orb-6 { width: 6vh;  height: 6vh;  top: 40%;  right: 6%; }
+
+@keyframes bundle-glow-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .bundle-glow {
     animation: none;
-    --glow-x: 50%;
-    --glow-y: 40%;
   }
 }
 
 .bundle-anchor {
-  height: 155vh;
+  height: 112vh;
 }
 
 .bundle-sticky {
