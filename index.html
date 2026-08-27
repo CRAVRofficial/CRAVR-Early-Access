@@ -36,21 +36,17 @@
 
   <main>
 
-    <!-- Intro: nur das Logo, gross. Materialisiert beim Laden, danach
-         automatischer Weiterscroll zum Hauptbereich (script.js). -->
-    <section class="intro-stage" data-intro-stage>
-      <img class="hero-image" src="assets/hero-architektur.jpg" alt="" width="1536" height="1024">
-      <div class="hero-scrim" aria-hidden="true"></div>
-      <div class="intro-content">
-        <img class="logo-anchor" data-logo-anchor src="assets/logo.svg" alt="CRAVR" width="92" height="92">
-      </div>
-    </section>
-
-    <!-- Hero: Headline, Subline, CTA. Teilt sich das Architekturbild mit dem
-         Intro fuer einen nahtlosen Eindruck. -->
+    <!-- Ein einziges Hero-Bild, zwei Zonen: oben ein kleiner Streifen nur fuer
+         das Logo (materialisiert beim Laden, danach automatischer Weiterscroll,
+         siehe script.js), darunter der eigentliche Hero mit Headline. Logo und
+         Button fliegen von hier aus in den festen Kopfbereich. -->
     <section class="hero" data-hero>
       <img class="hero-image" src="assets/hero-architektur.jpg" alt="" width="1536" height="1024">
       <div class="hero-scrim" aria-hidden="true"></div>
+
+      <div class="hero-logo-zone" data-intro-stage>
+        <img class="logo-anchor" data-logo-anchor src="assets/logo.svg" alt="CRAVR" width="130" height="130">
+      </div>
 
       <div class="hero-content">
         <h1 class="hero-headline">CRAVR kommt.</h1>

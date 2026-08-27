@@ -83,6 +83,22 @@
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var hasIO = "IntersectionObserver" in window;
 
+  function lerp(a, b, t) {
+    return a + (b - a) * t;
+  }
+
+  function clamp01(t) {
+    return Math.min(Math.max(t, 0), 1);
+  }
+
+  function easeInOutCubic(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+
+  function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
   // Reveal-on-scroll: motiviert durch die Reihenfolge Haltung-vor-Produkt,
   // jeder Abschnitt tritt einzeln in Erscheinung statt alles auf einmal zu zeigen.
   var revealTargets = document.querySelectorAll(".reveal");
@@ -108,11 +124,15 @@
     });
   }
 
-  // Bundle-Abschnitt: gepinnter Ausschnittwechsel. Je nachdem, welcher der
-  // drei unsichtbaren Anker gerade im Sichtfenster steht, wird die passende
-  // Textkarte eingeblendet. Die Anker sind bewusst 155vh hoch, damit
-  // zwischen zwei Wechseln eine ruhige Pause liegt statt eines direkten
-  // Anschlusses.
+  // ==========================================================================
+  // Bundle-Abschnitt: gepinnter Ausschnittwechsel. Ausloeser ist nicht "50 %
+  // eines Ankers sichtbar" (das machte die erste Karte laenger stehen als die
+  // uebrigen, weil vor ihr noch die Sticky-Flaeche selbst durchlaufen werden
+  // muss), sondern eine duenne Linie in der Bildschirmmitte: sobald die
+  // Oberkante eines Ankers dort ankommt, wird seine Karte aktiv. Dadurch ist
+  // jeder Abschnitt exakt gleich lang.
+  // ==========================================================================
+
   var bundle = document.querySelector("[data-bundle]");
 
   if (bundle && hasIO) {
@@ -137,7 +157,7 @@
           }
         });
       },
-      { threshold: 0.5 }
+      { rootMargin: "-50% 0px -50% 0px", threshold: 0 }
     );
     anchors.forEach(function (anchor) {
       bundleObserver.observe(anchor);
@@ -145,16 +165,31 @@
   }
 
   // ==========================================================================
-  // Flug-Animation: Logo und Button wandern von ihrer großen Ausgangsposition
-  // (Intro beziehungsweise Hero) in den festen Kopfbereich. Bewusst ohne
-  // Animationsbibliothek: ein scroll-Listener setzt nur ein Merkmal, die
-  // eigentliche Berechnung läuft gebündelt einmal pro Bildwechsel (requestAnimationFrame),
-  // damit nichts bei jedem einzelnen Scroll-Ereignis blockiert.
+  // Flug-Animation: Logo und Button wandern in den festen Kopfbereich.
+  //
+  // Logo: startet sofort beim Laden (Eingangsanimation, zeitgesteuert) im
+  // kleinen Logo-Streifen oben und dockt an, sobald man aus diesem Streifen
+  // herausscrollt.
+  //
+  // Button: bleibt an seiner Stelle im Hero stehen und folgt dabei ganz normal
+  // dem Scrollen, wie jeder andere Inhalt auch. Erst wenn der komplette Hero
+  // den oberen Bildschirmrand verlaesst, macht er eine kleine Drehung in den
+  // Kopfbereich.
+  //
+  // Beide Bewegungen folgen demselben Muster, um den Ruckler zu vermeiden,
+  // der beim ersten Anlauf auftrat: solange der jeweilige Flugabschnitt noch
+  // nicht begonnen hat, wird die Position eins zu eins aus der normalen
+  // Seiten-Scrollbewegung abgeleitet (kein Sprung). Sobald der Abschnitt
+  // beginnt, wird der zu diesem Zeitpunkt gueltige Startpunkt eingefroren und
+  // nur noch zwischen diesem festen Punkt und dem Zielpunkt interpoliert.
+  // Ein Punkt, der gleichzeitig Ziel einer Interpolation UND Ausgangspunkt
+  // einer fortlaufenden Berechnung ist, erzeugt sonst eine unbeabsichtigte
+  // Kurve statt einer geraden Bewegung.
   //
   // Bei reduzierter Bewegung oder ohne JavaScript bleibt alles beim
-  // statischen Ausgangszustand: das große Logo im Intro, der Button im
-  // Hero, der Kopfbereich bleibt leer. Kein Informationsverlust, nur ohne
-  // die Flug-Inszenierung.
+  // statischen Ausgangszustand: das grosse Logo oben, der Button im Hero,
+  // der Kopfbereich bleibt leer. Kein Informationsverlust, nur ohne die
+  // Flug-Inszenierung.
   // ==========================================================================
 
   var logoAnchor = document.querySelector("[data-logo-anchor]");
@@ -163,7 +198,8 @@
   var ctaFly = document.querySelector("[data-cta-fly]");
   var logoSlot = document.querySelector("[data-header-logo-slot]");
   var ctaSlot = document.querySelector("[data-header-cta-slot]");
-  var introStage = document.querySelector("[data-intro-stage]");
+  var logoZone = document.querySelector("[data-intro-stage]");
+  var heroSection = document.querySelector("[data-hero]");
 
   if (
     !reduceMotion &&
@@ -173,16 +209,15 @@
     ctaFly &&
     logoSlot &&
     ctaSlot &&
-    introStage
+    logoZone &&
+    heroSection
   ) {
     document.body.classList.add("js-flying");
 
     var DOCKED_LOGO_SIZE = 40;
+    var ENTRANCE_MS = 950;
+    var entranceStartTime = performance.now();
     var geometry = {};
-
-    function lerp(a, b, t) {
-      return a + (b - a) * t;
-    }
 
     function measure() {
       // Der rechte Slot bekommt die tatsaechliche Groesse des Buttons,
@@ -192,51 +227,87 @@
       ctaSlot.style.width = ctaFly.offsetWidth + "px";
       ctaSlot.style.height = ctaFly.offsetHeight + "px";
 
+      var scrollY = window.scrollY;
       var logoAnchorRect = logoAnchor.getBoundingClientRect();
       var ctaAnchorRect = ctaAnchor.getBoundingClientRect();
       var logoSlotRect = logoSlot.getBoundingClientRect();
       var ctaSlotRect = ctaSlot.getBoundingClientRect();
-      var scrollY = window.scrollY;
+      var heroRect = heroSection.getBoundingClientRect();
+
+      var logoAnchorDocY = logoAnchorRect.top + scrollY + logoAnchorRect.height / 2;
+      var ctaAnchorDocY = ctaAnchorRect.top + scrollY + ctaAnchorRect.height / 2;
+      var heroBottomDocY = heroRect.bottom + scrollY;
+
+      var logoZoneLength = Math.max(logoZone.offsetHeight, 1);
+      // Die eigentliche Flugstrecke des Buttons ist bewusst kurz (er soll die
+      // ganze Zeit an seinem Platz im Hero verweilen und erst kurz vor dem
+      // endgueltigen Verschwinden des Hero losfliegen), unabhaengig davon,
+      // wie hoch der Bildschirm gerade ist.
+      var CTA_FLIGHT_PX = 320;
+      var ctaZoneLength = CTA_FLIGHT_PX;
+      var ctaZoneStart = Math.max(heroBottomDocY - CTA_FLIGHT_PX, logoZoneLength);
 
       geometry = {
+        logoZoneLength: logoZoneLength,
         logoStartX: logoAnchorRect.left + logoAnchorRect.width / 2,
-        logoStartY: logoAnchorRect.top + scrollY + logoAnchorRect.height / 2,
+        logoFrozenY: logoAnchorDocY, // Zone beginnt bei scrollY 0, daher = natuerlicher Wert bei 0
         logoStartSize: logoAnchorRect.width,
         logoSlotX: logoSlotRect.left + logoSlotRect.width / 2,
         logoSlotY: logoSlotRect.top + logoSlotRect.height / 2,
 
+        ctaAnchorDocY: ctaAnchorDocY,
+        ctaZoneStart: ctaZoneStart,
+        ctaZoneLength: ctaZoneLength,
+        ctaFrozenY: ctaAnchorDocY - ctaZoneStart,
         ctaStartX: ctaAnchorRect.left + ctaAnchorRect.width / 2,
-        ctaStartY: ctaAnchorRect.top + scrollY + ctaAnchorRect.height / 2,
         ctaSlotX: ctaSlotRect.left + ctaSlotRect.width / 2,
         ctaSlotY: ctaSlotRect.top + ctaSlotRect.height / 2,
         ctaHalfW: ctaFly.offsetWidth / 2,
-        ctaHalfH: ctaFly.offsetHeight / 2,
-
-        transitionZone: introStage.offsetHeight
+        ctaHalfH: ctaFly.offsetHeight / 2
       };
     }
-
-    var ticking = false;
 
     function applyFrame() {
       ticking = false;
       var scrollY = window.scrollY;
-      var progress = Math.min(Math.max(scrollY / geometry.transitionZone, 0), 1);
-      var eased = progress; // linear folgt dem Finger/Scrollrad am direktesten
 
-      var logoY = lerp(geometry.logoStartY - scrollY, geometry.logoSlotY, eased);
-      var logoX = lerp(geometry.logoStartX, geometry.logoSlotX, eased);
-      var logoSize = lerp(geometry.logoStartSize, DOCKED_LOGO_SIZE, eased);
-      var logoScale = logoSize / DOCKED_LOGO_SIZE;
+      // Logo: Eingangsanimation (zeitgesteuert) mal Andock-Fortschritt (scrollgesteuert)
+      var entranceT = clamp01((performance.now() - entranceStartTime) / ENTRANCE_MS);
+      var entranceEase = easeOutCubic(entranceT);
+
+      var logoProgress = clamp01(scrollY / geometry.logoZoneLength);
+      var logoEase = easeInOutCubic(logoProgress);
+
+      var logoX = lerp(geometry.logoStartX, geometry.logoSlotX, logoEase);
+      var logoY = lerp(geometry.logoFrozenY, geometry.logoSlotY, logoEase);
+      var logoDockScale = lerp(geometry.logoStartSize / DOCKED_LOGO_SIZE, 1, logoEase);
+      var entranceScale = lerp(0.55, 1, entranceEase);
+
+      logoFly.style.opacity = String(entranceEase);
       logoFly.style.transform =
-        "translate3d(" + (logoX - DOCKED_LOGO_SIZE / 2) + "px, " + (logoY - DOCKED_LOGO_SIZE / 2) + "px, 0) scale(" + logoScale + ")";
+        "translate3d(" + (logoX - DOCKED_LOGO_SIZE / 2) + "px, " + (logoY - DOCKED_LOGO_SIZE / 2) + "px, 0) " +
+        "scale(" + logoDockScale * entranceScale + ")";
 
-      var ctaY = lerp(geometry.ctaStartY - scrollY, geometry.ctaSlotY, eased);
-      var ctaX = lerp(geometry.ctaStartX, geometry.ctaSlotX, eased);
-      var ctaRotation = lerp(-380, 0, eased);
+      // Button: folgt der normalen Scrollbewegung, bis der Hero den oberen
+      // Rand verlaesst, dann Uebergang zum festen Punkt im Kopfbereich.
+      // X und Rotation bleiben waehrend der Verweildauer automatisch am
+      // Ausgangspunkt (ctaProgress ist dort 0), nur Y muss den normalen
+      // Scrollverlauf eigens nachbilden.
+      var ctaProgress = clamp01((scrollY - geometry.ctaZoneStart) / geometry.ctaZoneLength);
+      var ctaEase = easeInOutCubic(ctaProgress);
+      var ctaY = scrollY <= geometry.ctaZoneStart
+        ? geometry.ctaAnchorDocY - scrollY
+        : lerp(geometry.ctaFrozenY, geometry.ctaSlotY, ctaEase);
+      var ctaX = lerp(geometry.ctaStartX, geometry.ctaSlotX, ctaEase);
+      var ctaRotation = Math.sin(ctaEase * Math.PI) * -16;
+
+      ctaFly.style.opacity = "1";
       ctaFly.style.transform =
-        "translate3d(" + (ctaX - geometry.ctaHalfW) + "px, " + (ctaY - geometry.ctaHalfH) + "px, 0) rotate(" + ctaRotation + "deg)";
+        "translate3d(" + (ctaX - geometry.ctaHalfW) + "px, " + (ctaY - geometry.ctaHalfH) + "px, 0) " +
+        "rotate(" + ctaRotation + "deg)";
     }
+
+    var ticking = false;
 
     function requestFrame() {
       if (!ticking) {
@@ -248,6 +319,17 @@
     measure();
     applyFrame();
     window.addEventListener("scroll", requestFrame, { passive: true });
+
+    // Eigenständige Schleife nur fuer die Eingangsanimation, damit das Logo
+    // auch dann sichtbar materialisiert, wenn niemand in den ersten Sekunden
+    // scrollt.
+    function entranceLoop() {
+      applyFrame();
+      if (performance.now() - entranceStartTime < ENTRANCE_MS) {
+        window.requestAnimationFrame(entranceLoop);
+      }
+    }
+    window.requestAnimationFrame(entranceLoop);
 
     var resizeTimer = null;
     window.addEventListener(
@@ -262,10 +344,10 @@
       { passive: true }
     );
 
-    // Automatischer Weiterscroll vom Intro zum Hauptbereich, sobald die
-    // Logo-Animation Zeit hatte anzukommen. Bricht sofort ab, sobald der
-    // Mensch selbst scrollt, tippt oder eine Taste drückt, damit die
-    // Automatik nie gegen eine echte Eingabe ankämpft.
+    // Automatischer Weiterscroll aus dem kleinen Logo-Streifen zum Hauptbereich,
+    // sobald die Logo-Animation Zeit hatte anzukommen. Bricht sofort ab,
+    // sobald der Mensch selbst scrollt, tippt oder eine Taste drueckt, damit
+    // die Automatik nie gegen eine echte Eingabe ankaempft.
     var userInteracted = false;
     var cancelEvents = ["wheel", "touchstart", "keydown", "pointerdown"];
 
@@ -280,9 +362,9 @@
     });
 
     window.setTimeout(function () {
-      if (!userInteracted && window.scrollY < 40) {
-        window.scrollTo({ top: geometry.transitionZone, behavior: "smooth" });
+      if (!userInteracted && window.scrollY < 20) {
+        window.scrollTo({ top: geometry.logoZoneLength, behavior: "smooth" });
       }
-    }, 1650);
+    }, 1500);
   }
 })();
