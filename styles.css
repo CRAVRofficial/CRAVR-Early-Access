@@ -379,7 +379,13 @@ body.js-flying .cta-anchor-hidden {
 /* ---- Markenkern-Moment: reine Typografie, radikale Leerflaeche ---- */
 
 .section-creed {
-  background: var(--deep-green);
+  /* Weicher Ein-/Ausklang statt hartem Farbschnitt: oben blendet aus dem
+     nahezu schwarzen Hero-Ende ein, unten wieder auf denselben Farbton
+     zurueck, damit der Uebergang ins Bild der naechsten Sektion nicht als
+     scharfe Kante wirkt (siehe dort .section-image-scrim, die den gleichen
+     Farbton am oberen Bildrand aufgreift). Feste px-Distanz statt Prozent,
+     damit der Fade unabhaengig von der Textlaenge immer gleich kurz bleibt. */
+  background: linear-gradient(180deg, var(--rich-black) 0, var(--deep-green) 70px, var(--deep-green) calc(100% - 70px), var(--rich-black) 100%);
   text-align: center;
 }
 
@@ -438,7 +444,10 @@ body.js-flying .cta-anchor-hidden {
 .section-image-scrim {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgb(10 10 10 / 15%) 0%, rgb(10 10 10 / 92%) 100%);
+  /* Erster Abschnitt greift den Farbton auf, mit dem .section-creed direkt
+     darueber ausklingt, damit das Bild nicht hart aus vollem Gruen
+     "auftaucht", sondern aus demselben Dunkel heraus erscheint. */
+  background: linear-gradient(180deg, rgb(10 10 10 / 82%) 0, rgb(10 10 10 / 15%) 100px, rgb(10 10 10 / 92%) 100%);
 }
 
 .section-image-content {
