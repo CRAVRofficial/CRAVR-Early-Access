@@ -125,12 +125,17 @@
   }
 
   // ==========================================================================
-  // Bundle-Abschnitt: gepinnter Ausschnittwechsel. Ausloeser ist nicht "50 %
-  // eines Ankers sichtbar" (das machte die erste Karte laenger stehen als die
-  // uebrigen, weil vor ihr noch die Sticky-Flaeche selbst durchlaufen werden
-  // muss), sondern eine duenne Linie in der Bildschirmmitte: sobald die
-  // Oberkante eines Ankers dort ankommt, wird seine Karte aktiv. Dadurch ist
-  // jeder Abschnitt exakt gleich lang.
+  // Bundle-Abschnitt: gepinnter Ausschnittwechsel. Ausloeser ist eine duenne
+  // Linie an der UNTERKANTE des Bildschirms: sobald die Oberkante eines
+  // Ankers dort ankommt, wird seine Karte aktiv.
+  //
+  // Warum die Unterkante und nicht die Mitte: die gepinnte Flaeche ist selbst
+  // 100vh hoch und steht im Fluss VOR den Ankern. Eine Linie in der Mitte
+  // wird von jedem Anker daher erst 50vh spaeter erreicht, als er eigentlich
+  // dran waere. Die erste Karte stand dadurch 162vh lang, die zweite 112vh,
+  // die dritte nur 62vh. An der Unterkante faellt dieser Versatz weg und
+  // jede Karte bekommt exakt die Ankerhoehe (.bundle-anchor in styles.css)
+  // als Scrollstrecke. Wer die Verweildauer aendern will, aendert nur dort.
   // ==========================================================================
 
   var bundle = document.querySelector("[data-bundle]");
@@ -157,7 +162,7 @@
           }
         });
       },
-      { rootMargin: "-50% 0px -50% 0px", threshold: 0 }
+      { rootMargin: "-100% 0px 0px 0px", threshold: 0 }
     );
     anchors.forEach(function (anchor) {
       bundleObserver.observe(anchor);
