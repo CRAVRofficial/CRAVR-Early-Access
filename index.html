@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRAVR kommt. Warteliste</title>
+<meta name="description" content="CRAVR: ein Premium-Journal für Disziplin, mit Sanduhr und Stift als Teil des Rituals. Trag dich ein und sei zuerst dabei, wenn CRAVR startet.">
+<meta name="robots" content="noindex, nofollow">
+<meta property="og:title" content="CRAVR kommt.">
+<meta property="og:description" content="Ein Premium-Journal für Disziplin. Trag dich ein und sei zuerst dabei.">
+<meta property="og:image" content="assets/hero-architektur.jpg">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="noise" aria-hidden="true"></div>
+
+  <main>
+
+    <!-- Hero: Architekturbild, max. drei Textelemente -->
+    <section class="hero">
+      <img class="hero-image" src="assets/hero-architektur.jpg" alt="" width="1536" height="1024">
+      <div class="hero-scrim" aria-hidden="true"></div>
+
+      <nav class="hero-nav">
+        <img class="hero-logo" src="assets/logo.svg" alt="CRAVR" width="40" height="40">
+      </nav>
+
+      <div class="hero-content">
+        <h1 class="hero-headline">CRAVR kommt.</h1>
+        <p class="hero-subline">Ein Premium-Journal für Disziplin. Kein Motivationsbuch. Dein Ritual, Tag für Tag.</p>
+        <a class="ghost-button" href="#anmeldung">Platz sichern</a>
+      </div>
+    </section>
+
+    <!-- Markenkern-Moment: reine Typografie, radikale Leerfläche -->
+    <section class="section section-creed reveal">
+      <div class="section-inner">
+        <p class="creed">
+          <span class="creed-line creed-negative">CRAVR verkauft keine Motivation.</span>
+          <span class="creed-line creed-negative">CRAVR verkauft keine Manifestation.</span>
+          <span class="creed-line creed-positive">CRAVR verkauft einen Rahmen, in dem Disziplin entstehen kann.</span>
+        </p>
+        <p class="creed-rhythm">Tag für Tag. Wort für Wort. Seite für Seite.</p>
+      </div>
+    </section>
+
+    <!-- Das Prinzip: vollflächiges Bild, erklärt das Warum ohne die Struktur zu zeigen -->
+    <section class="section-image reveal">
+      <img src="assets/sektion-saeulen.jpg" alt="" width="1023" height="1537">
+      <div class="section-image-scrim" aria-hidden="true"></div>
+      <div class="section-image-content">
+        <div class="section-inner">
+          <h2 class="section-headline">Ein Rahmen. Kein Ratgeber.</h2>
+          <p class="section-body">
+            Die meisten Vorsätze scheitern nicht am Willen, sondern daran, dass nichts sie trägt.
+            CRAVR gibt dir jeden Tag denselben Ablauf. Kurz genug, dass du ihn durchhältst.
+            Fest genug, dass er dich hält, wenn der Wille gerade fehlt.
+          </p>
+          <p class="creed-rhythm">Fünf Minuten sind immer möglich.</p>
+          <p class="image-credit">Symbolbild, KI-generiert.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Das Bundle: neuer Kernabschnitt, erklärt die drei Teile ohne die Tagesstruktur zu zeigen -->
+    <section class="section section-bundle reveal">
+      <div class="section-inner">
+        <h2 class="section-headline">Drei Werkzeuge. Ein Ritual.</h2>
+        <p class="section-body">CRAVR ist kein Buch allein. Jedes Teil im Paket hat eine Aufgabe, kein Zubehör, kein Beiwerk.</p>
+
+        <div class="bundle-grid">
+          <div class="bundle-item">
+            <span class="bundle-numeral">I</span>
+            <h3 class="bundle-title">Das Journal</h3>
+            <p class="bundle-text">Der Rahmen selbst. Ein fester Ablauf für jeden Tag, kurz genug zum Durchhalten, fest genug, um dich zu tragen, wenn der Wille fehlt.</p>
+          </div>
+          <div class="bundle-item">
+            <span class="bundle-numeral">II</span>
+            <h3 class="bundle-title">Die Sanduhr</h3>
+            <p class="bundle-text">Fünf Minuten sind immer möglich. Sie erinnert daran, wenn der Tag stressig war und die Motivation fehlt.</p>
+          </div>
+          <div class="bundle-item">
+            <span class="bundle-numeral">III</span>
+            <h3 class="bundle-title">Der Stift</h3>
+            <p class="bundle-text">Kein Schreibgerät. Der Auslöser des Rituals. Schwer, aus Metall, mit Schraubkappe. Kein Plastik, keine Klickmechanik.</p>
+          </div>
+        </div>
+
+        <p class="bundle-ritual"><strong>Journal öffnen. Sanduhr umdrehen. Kappe abschrauben.</strong> Schreiben. Genau in dieser Reihenfolge beginnt CRAVR.</p>
+      </div>
+    </section>
+
+    <!-- Verknappung: macht das Geheimnis zum Grund für die Eintragung -->
+    <section class="section section-open reveal">
+      <div class="section-inner">
+        <h2 class="section-headline">Der Rest bleibt unser Geheimnis.</h2>
+        <p class="section-body">Die genaue Struktur hinter CRAVR, Tagesanzahl und Phasenaufbau, zeigen wir erst zum Start. Wer sich jetzt einträgt, erfährt es zuerst.</p>
+      </div>
+    </section>
+
+    <!-- Formular: einziger Conversion-Punkt der Seite -->
+    <section class="section section-form" id="anmeldung">
+      <div class="section-inner">
+        <div class="form-shell">
+          <h2 class="form-headline">Trag dich ein.<br>Sei zuerst dabei.</h2>
+
+          <form id="waitlist-form" class="waitlist-form" data-endpoint="https://cravr-warteliste.cravr-official.workers.dev" novalidate>
+
+            <label class="visually-hidden" for="email">Deine E-Mail-Adresse</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="email-input"
+              placeholder="Deine E-Mail-Adresse"
+              autocomplete="email"
+              required
+            >
+
+            <!-- Honeypot: für Menschen unsichtbar, Bots füllen es aus -->
+            <div class="hp-field" aria-hidden="true">
+              <label for="website">Bitte dieses Feld leer lassen</label>
+              <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+            </div>
+
+            <fieldset class="price-signal">
+              <legend>Was wäre dir ein Journal wie dieses wert? <span class="optional">(optional)</span></legend>
+              <div class="price-options">
+                <label class="price-option">
+                  <input type="radio" name="PRICE_SIGNAL" value="unter_30">
+                  <span>unter 30&nbsp;&euro;</span>
+                </label>
+                <label class="price-option">
+                  <input type="radio" name="PRICE_SIGNAL" value="30_50">
+                  <span>30-50&nbsp;&euro;</span>
+                </label>
+                <label class="price-option">
+                  <input type="radio" name="PRICE_SIGNAL" value="50_70">
+                  <span>50-70&nbsp;&euro;</span>
+                </label>
+                <label class="price-option">
+                  <input type="radio" name="PRICE_SIGNAL" value="ueber_70">
+                  <span>über 70&nbsp;&euro;</span>
+                </label>
+              </div>
+            </fieldset>
+
+            <button type="submit" class="ghost-button submit-button">Platz sichern</button>
+
+            <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
+          </form>
+
+          <p class="fine-print">Kein Spam. Kein Verkauf deiner Daten. Du erfährst nur, wenn CRAVR startet. Mehr dazu in der <a href="datenschutz.html">Datenschutzerklärung</a>.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="section-inner footer-inner">
+      <span class="footer-brand">CRAVR</span>
+      <nav class="footer-nav">
+        <a href="impressum.html">Impressum</a>
+        <a href="datenschutz.html">Datenschutz</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
