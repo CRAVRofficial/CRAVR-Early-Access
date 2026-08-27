@@ -694,7 +694,10 @@ body.js-flying .cta-anchor-hidden {
 /* ---- Verknappung / bewusst offen ---- */
 
 .section-open {
-  background: var(--deep-green);
+  /* Weicher Ein-/Ausklang wie bei .section-creed: die Nachbarn
+     (.bundle-scroller oben, .section-form unten) sind beide flaches
+     Schwarz, ein eigener Verlauf ohne Aenderung an den Nachbarn reicht. */
+  background: linear-gradient(180deg, var(--rich-black) 0, var(--deep-green) 70px, var(--deep-green) calc(100% - 70px), var(--rich-black) 100%);
   border-top: 1px solid var(--gold-line);
   text-align: center;
 }
