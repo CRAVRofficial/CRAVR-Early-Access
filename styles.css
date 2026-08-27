@@ -379,7 +379,7 @@ body.js-flying .cta-anchor-hidden {
 /* ---- Markenkern-Moment: reine Typografie, radikale Leerflaeche ---- */
 
 .section-creed {
-  background: var(--rich-black);
+  background: var(--deep-green);
   text-align: center;
 }
 
@@ -469,7 +469,13 @@ body.js-flying .cta-anchor-hidden {
 }
 
 .bundle-anchor {
-  height: 90vh;
+  /* dvh statt vh: "vh" wird auf iOS Safari gegen die groesstmoegliche
+     Ansicht berechnet (Adressleiste eingeklappt). Die dadurch entstehende
+     Scrollstrecke ist laenger als die tatsaechlich sichtbare Flaeche mit
+     eingeblendeter Adressleiste, jede Karte wirkte dadurch trotz "90vh"
+     noch fast wie ein ganzer Bildschirm. "dvh" richtet sich nach der
+     jeweils tatsaechlich sichtbaren Flaeche, siehe auch .hero-content. */
+  height: 65dvh;
 }
 
 /* Overflow:hidden sitzt bewusst auf der gepinnten Flaeche selbst und NICHT
