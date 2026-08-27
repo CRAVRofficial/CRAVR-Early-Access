@@ -17,18 +17,21 @@
 
   <div class="noise" aria-hidden="true"></div>
 
+  <header class="site-header" data-site-header>
+    <div class="site-header-inner">
+      <img class="logo-mark" src="assets/logo.svg" alt="CRAVR" width="40" height="40">
+    </div>
+  </header>
+
   <main>
 
-    <!-- Hero: Architekturbild, max. drei Textelemente -->
-    <section class="hero">
+    <!-- Hero: Architekturbild, zentriert, grosses Logo mit Eingangsanimation -->
+    <section class="hero" data-hero>
       <img class="hero-image" src="assets/hero-architektur.jpg" alt="" width="1536" height="1024">
       <div class="hero-scrim" aria-hidden="true"></div>
 
-      <nav class="hero-nav">
-        <img class="hero-logo" src="assets/logo.svg" alt="CRAVR" width="40" height="40">
-      </nav>
-
       <div class="hero-content">
+        <img class="hero-logo-big" src="assets/logo.svg" alt="CRAVR" width="92" height="92">
         <h1 class="hero-headline">CRAVR kommt.</h1>
         <p class="hero-subline">Ein Premium-Journal für Disziplin. Kein Motivationsbuch. Dein Ritual, Tag für Tag.</p>
         <a class="ghost-button" href="#anmeldung">Platz sichern</a>
@@ -65,32 +68,45 @@
       </div>
     </section>
 
-    <!-- Das Bundle: neuer Kernabschnitt, erklärt die drei Teile ohne die Tagesstruktur zu zeigen -->
-    <section class="section section-bundle reveal">
-      <div class="section-inner">
-        <h2 class="section-headline">Drei Werkzeuge. Ein Ritual.</h2>
-        <p class="section-body">CRAVR ist kein Buch allein. Jedes Teil im Paket hat eine Aufgabe, kein Zubehör, kein Beiwerk.</p>
+    <!-- Das Bundle: gepinnter Ausschnittwechsel, Text tauscht beim Scrollen, Hintergrund driftet leicht -->
+    <section class="bundle-scroller reveal" id="bundle" data-bundle>
+      <div class="bundle-glow" aria-hidden="true"></div>
 
-        <div class="bundle-grid">
-          <div class="bundle-item">
-            <span class="bundle-numeral">I</span>
-            <h3 class="bundle-title">Das Journal</h3>
-            <p class="bundle-text">Der Rahmen selbst. Ein fester Ablauf für jeden Tag, kurz genug zum Durchhalten, fest genug, um dich zu tragen, wenn der Wille fehlt.</p>
+      <div class="bundle-sticky">
+        <div class="section-inner bundle-inner">
+          <h2 class="section-headline">Drei Werkzeuge. Ein Ritual.</h2>
+
+          <div class="bundle-panel" data-bundle-panel>
+            <div class="bundle-slide is-active" data-slide="0">
+              <span class="bundle-numeral">I</span>
+              <h3 class="bundle-title">Das Journal</h3>
+              <p class="bundle-text">Der Rahmen selbst. Ein fester Ablauf für jeden Tag, kurz genug zum Durchhalten, fest genug, um dich zu tragen, wenn der Wille fehlt.</p>
+            </div>
+            <div class="bundle-slide" data-slide="1">
+              <span class="bundle-numeral">II</span>
+              <h3 class="bundle-title">Die Sanduhr</h3>
+              <p class="bundle-text">Fünf Minuten sind immer möglich. Sie erinnert daran, wenn der Tag stressig war und die Motivation fehlt.</p>
+            </div>
+            <div class="bundle-slide" data-slide="2">
+              <span class="bundle-numeral">III</span>
+              <h3 class="bundle-title">Der Stift</h3>
+              <p class="bundle-text">Kein Schreibgerät. Der Auslöser des Rituals. Er begleitet dich durch deine tägliche Routine und gehört fest zum Paket.</p>
+            </div>
           </div>
-          <div class="bundle-item">
-            <span class="bundle-numeral">II</span>
-            <h3 class="bundle-title">Die Sanduhr</h3>
-            <p class="bundle-text">Fünf Minuten sind immer möglich. Sie erinnert daran, wenn der Tag stressig war und die Motivation fehlt.</p>
-          </div>
-          <div class="bundle-item">
-            <span class="bundle-numeral">III</span>
-            <h3 class="bundle-title">Der Stift</h3>
-            <p class="bundle-text">Kein Schreibgerät. Der Auslöser des Rituals. Schwer, aus Metall, mit Schraubkappe. Kein Plastik, keine Klickmechanik.</p>
+
+          <div class="bundle-dots" aria-hidden="true">
+            <span class="bundle-dot is-active" data-dot="0"></span>
+            <span class="bundle-dot" data-dot="1"></span>
+            <span class="bundle-dot" data-dot="2"></span>
           </div>
         </div>
-
-        <p class="bundle-ritual"><strong>Journal öffnen. Sanduhr umdrehen. Kappe abschrauben.</strong> Schreiben. Genau in dieser Reihenfolge beginnt CRAVR.</p>
       </div>
+
+      <div class="bundle-anchor" data-anchor="0"></div>
+      <div class="bundle-anchor" data-anchor="1"></div>
+      <div class="bundle-anchor" data-anchor="2"></div>
+
+      <p class="bundle-ritual"><strong>Journal öffnen. Sanduhr umdrehen. Kappe abschrauben.</strong> Schreiben. Genau in dieser Reihenfolge beginnt CRAVR.</p>
     </section>
 
     <!-- Verknappung: macht das Geheimnis zum Grund für die Eintragung -->

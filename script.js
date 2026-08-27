@@ -1,6 +1,8 @@
 // CRAVR Warteliste: Formular-Anbindung an den Cloudflare-Worker (unverändert
-// aus dem Vorgängerprojekt, siehe bridge/worker.js) und dezente Eingangs-
-// Animation beim Scrollen. Kein Tracking, keine externen Skripte.
+// aus dem Vorgängerprojekt, siehe bridge/worker.js), Eingangs-Animation beim
+// Scrollen, fester Kopfbereich sobald der Hero verlassen wird, und der
+// gepinnte Ausschnittwechsel im Bundle-Abschnitt. Kein Tracking, keine
+// externen Skripte.
 
 (function () {
   "use strict";
@@ -79,29 +81,85 @@
     }
   }
 
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var hasIO = "IntersectionObserver" in window;
+
   // Reveal-on-scroll: motiviert durch die Reihenfolge Haltung-vor-Produkt,
   // jeder Abschnitt tritt einzeln in Erscheinung statt alles auf einmal zu zeigen.
-  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var revealTargets = document.querySelectorAll(".reveal");
 
-  if (reduceMotion || !("IntersectionObserver" in window)) {
+  if (reduceMotion || !hasIO) {
     revealTargets.forEach(function (el) {
       el.classList.add("is-visible");
     });
   } else {
-    var observer = new IntersectionObserver(
+    var revealObserver = new IntersectionObserver(
       function (entries) {
         entries.forEach(function (entry) {
           if (entry.isIntersecting) {
             entry.target.classList.add("is-visible");
-            observer.unobserve(entry.target);
+            revealObserver.unobserve(entry.target);
           }
         });
       },
       { threshold: 0.15 }
     );
     revealTargets.forEach(function (el) {
-      observer.observe(el);
+      revealObserver.observe(el);
+    });
+  }
+
+  // Fester Kopfbereich: erscheint, sobald der Hero den oberen Bildschirmrand
+  // verlaesst, verschwindet wieder, sobald man zurueck zum Hero scrollt.
+  // Motiviert durch Orientierung: das Logo bleibt als Ankerpunkt sichtbar,
+  // ohne im Hero selbst zu verdoppeln.
+  var header = document.querySelector("[data-site-header]");
+  var hero = document.querySelector("[data-hero]");
+
+  if (header && hero && hasIO) {
+    var headerObserver = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          header.classList.toggle("is-visible", !entry.isIntersecting);
+        });
+      },
+      { rootMargin: "-" + (header.offsetHeight || 76) + "px 0px 0px 0px" }
+    );
+    headerObserver.observe(hero);
+  }
+
+  // Bundle-Abschnitt: gepinnter Ausschnittwechsel. Je nachdem, welcher der
+  // drei unsichtbaren Anker gerade im Sichtfenster steht, wird die passende
+  // Textkarte eingeblendet, Vorgaenger und Nachfolger bleiben unsichtbar
+  // im gleichen Platz liegen (kein Layout-Sprung).
+  var bundle = document.querySelector("[data-bundle]");
+
+  if (bundle && hasIO) {
+    var slides = bundle.querySelectorAll("[data-slide]");
+    var dots = bundle.querySelectorAll("[data-dot]");
+    var anchors = bundle.querySelectorAll("[data-anchor]");
+
+    var setActiveSlide = function (index) {
+      slides.forEach(function (slide) {
+        slide.classList.toggle("is-active", slide.dataset.slide === String(index));
+      });
+      dots.forEach(function (dot) {
+        dot.classList.toggle("is-active", dot.dataset.dot === String(index));
+      });
+    };
+
+    var bundleObserver = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            setActiveSlide(entry.target.dataset.anchor);
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+    anchors.forEach(function (anchor) {
+      bundleObserver.observe(anchor);
     });
   }
 })();

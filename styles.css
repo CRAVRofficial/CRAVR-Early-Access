@@ -6,8 +6,8 @@
 
 @font-face {
   font-family: "Cinzel";
-  src: url("fonts/Cinzel/static/Cinzel-Black.ttf") format("truetype");
-  font-weight: 900;
+  src: url("fonts/Cinzel/Cinzel-VariableFont_wght.ttf") format("truetype-variations");
+  font-weight: 400 900;
   font-style: normal;
   font-display: swap;
 }
@@ -36,6 +36,7 @@
   --unit: 4px;
   --max-width: 1180px;
   --edge: clamp(20px, 5vw, 64px);
+  --header-height: 76px;
 
   --radius-sm: 4px;
   --radius-md: 8px;
@@ -106,6 +107,12 @@ a {
   padding: 0 var(--edge);
 }
 
+.logo-mark {
+  width: 40px;
+  height: 40px;
+  display: block;
+}
+
 .ghost-button {
   display: inline-flex;
   align-items: center;
@@ -117,7 +124,7 @@ a {
   background: transparent;
   color: var(--dark-gold);
   font-family: var(--font-display);
-  font-weight: 900;
+  font-weight: 700;
   font-size: 14px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -143,12 +150,56 @@ a {
   outline-offset: 3px;
 }
 
+/* ==========================================================================
+   Fester Kopfbereich: nur sichtbar, sobald der Hero verlassen wurde
+   ========================================================================== */
+
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--edge);
+  background: linear-gradient(180deg, rgb(10 10 10 / 88%) 0%, rgb(10 10 10 / 0%) 100%);
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.site-header.is-visible {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.site-header-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header {
+    transition: opacity 0.2s linear;
+    transform: none;
+  }
+}
+
+/* ==========================================================================
+   Hero
+   ========================================================================== */
+
 .hero {
   position: relative;
   min-height: 100dvh;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
 }
 
@@ -165,25 +216,7 @@ a {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgb(10 10 10 / 55%) 0%, rgb(10 10 10 / 35%) 38%, rgb(10 10 10 / 88%) 100%),
-    linear-gradient(90deg, rgb(10 10 10 / 55%) 0%, transparent 45%);
-}
-
-.hero-nav {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24px var(--edge);
-  max-width: var(--max-width);
-  margin: 0 auto;
-  width: 100%;
-}
-
-.hero-logo {
-  width: 40px;
-  height: 40px;
+    linear-gradient(180deg, rgb(10 10 10 / 45%) 0%, rgb(10 10 10 / 40%) 45%, rgb(10 10 10 / 82%) 100%);
 }
 
 .hero-content {
@@ -192,11 +225,40 @@ a {
   max-width: var(--max-width);
   margin: 0 auto;
   width: 100%;
-  padding: 0 var(--edge) clamp(48px, 8vh, 96px);
+  padding: clamp(96px, 14vh, 160px) var(--edge) clamp(48px, 8vh, 96px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.hero-logo-big {
+  width: clamp(60px, 8vw, 92px);
+  height: auto;
+  margin-bottom: clamp(20px, 3vh, 32px);
+  animation: logo-materialize 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  filter: drop-shadow(0 2px 3px rgb(10 10 10 / 70%)) drop-shadow(0 0 20px rgb(10 10 10 / 65%));
+}
+
+@keyframes logo-materialize {
+  0% {
+    opacity: 0;
+    transform: scale(0.68) rotate(-14deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-logo-big {
+    animation: none;
+  }
 }
 
 .hero-headline {
-  margin: 0;
+  margin: 0 auto;
   font-family: var(--font-display);
   font-weight: 900;
   text-transform: uppercase;
@@ -207,12 +269,16 @@ a {
 }
 
 .hero-subline {
-  margin: 20px 0 32px;
+  margin: 20px auto 32px;
   max-width: 46ch;
   font-size: clamp(16px, 2vw, 19px);
   color: var(--cream-dim);
   font-weight: 300;
 }
+
+/* ==========================================================================
+   Sektionen, allgemein
+   ========================================================================== */
 
 .section {
   padding: clamp(72px, 12vh, 160px) 0;
@@ -230,10 +296,14 @@ a {
 
 .section-body {
   max-width: 62ch;
+  margin-left: auto;
+  margin-right: auto;
   color: var(--cream-dim);
   font-size: 17px;
   font-weight: 300;
 }
+
+/* ---- Markenkern-Moment: reine Typografie, radikale Leerflaeche ---- */
 
 .section-creed {
   background: var(--rich-black);
@@ -250,10 +320,10 @@ a {
 
 .creed-line {
   font-family: var(--font-display);
-  font-weight: 900;
+  font-weight: 600;
   text-transform: uppercase;
   font-size: clamp(22px, 3.4vw, 38px);
-  line-height: 1.25;
+  line-height: 1.3;
 }
 
 .creed-negative {
@@ -273,6 +343,8 @@ a {
   font-weight: 300;
   text-transform: none;
 }
+
+/* ---- Prinzip: vollflaechiges Bild mit Text, zentriert ---- */
 
 .section-image {
   position: relative;
@@ -301,6 +373,12 @@ a {
   z-index: 1;
   width: 100%;
   padding-bottom: clamp(56px, 9vh, 96px);
+  text-align: center;
+}
+
+.section-image-content .section-inner {
+  max-width: 680px;
+  margin: 0 auto;
 }
 
 .image-credit {
@@ -310,23 +388,88 @@ a {
   letter-spacing: 0.02em;
 }
 
-.section-bundle {
+/* ---- Bundle-Abschnitt: gepinnter Ausschnittwechsel wie bei der Air-Referenz ---- */
+
+.bundle-scroller {
+  position: relative;
   background: var(--rich-black);
 }
 
-.bundle-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  background: var(--gold-line);
-  border-top: 1px solid var(--gold-line);
-  border-bottom: 1px solid var(--gold-line);
-  margin-top: 56px;
+.bundle-glow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: radial-gradient(560px circle at var(--glow-x, 30%) var(--glow-y, 35%), rgb(184 154 90 / 15%), transparent 62%);
+  animation: bundle-glow-drift 24s ease-in-out infinite alternate;
 }
 
-.bundle-item {
-  background: var(--rich-black);
-  padding: 44px clamp(20px, 3vw, 40px) 48px;
+@keyframes bundle-glow-drift {
+  0% {
+    --glow-x: 18%;
+    --glow-y: 28%;
+  }
+  50% {
+    --glow-x: 78%;
+    --glow-y: 58%;
+  }
+  100% {
+    --glow-x: 42%;
+    --glow-y: 82%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bundle-glow {
+    animation: none;
+    --glow-x: 50%;
+    --glow-y: 40%;
+  }
+}
+
+.bundle-anchor {
+  height: 100vh;
+}
+
+.bundle-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  z-index: 1;
+}
+
+.bundle-inner {
+  width: 100%;
+  text-align: center;
+}
+
+.bundle-panel {
+  position: relative;
+  min-height: 280px;
+  max-width: 46ch;
+  margin: 48px auto 0;
+}
+
+.bundle-slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.bundle-slide.is-active {
+  position: relative;
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
 }
 
 .bundle-numeral {
@@ -343,24 +486,48 @@ a {
   font-family: var(--font-display);
   font-weight: 900;
   text-transform: uppercase;
-  font-size: 21px;
+  font-size: clamp(22px, 3vw, 28px);
   letter-spacing: 0.02em;
-  margin: 0 0 14px;
+  margin: 0 0 16px;
 }
 
 .bundle-text {
   color: var(--cream-dim);
-  font-size: 15.5px;
+  font-size: 16.5px;
   font-weight: 300;
   margin: 0;
 }
 
+.bundle-dots {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 40px;
+}
+
+.bundle-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold-line-strong);
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.bundle-dot.is-active {
+  background: var(--dark-gold);
+  transform: scale(1.5);
+}
+
 .bundle-ritual {
-  margin-top: 44px;
-  font-size: 15px;
+  position: relative;
+  z-index: 1;
+  padding: clamp(56px, 9vh, 88px) 0;
+  text-align: center;
+  font-size: 16px;
   color: var(--cream-faint);
   font-weight: 300;
   max-width: 56ch;
+  margin: 0 auto;
 }
 
 .bundle-ritual strong {
@@ -368,14 +535,47 @@ a {
   font-weight: 500;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .bundle-sticky {
+    position: static;
+    height: auto;
+    padding: 0 0 24px;
+  }
+
+  .bundle-anchor {
+    display: none;
+  }
+
+  .bundle-panel {
+    min-height: auto;
+  }
+
+  .bundle-slide {
+    position: static;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    margin-bottom: 40px;
+  }
+
+  .bundle-dots {
+    display: none;
+  }
+}
+
+/* ---- Verknappung / bewusst offen ---- */
+
 .section-open {
   background: var(--deep-green);
   border-top: 1px solid var(--gold-line);
+  text-align: center;
 }
 
 .section-open .section-headline {
   color: var(--dark-gold);
 }
+
+/* ---- Formular ---- */
 
 .section-form {
   background: var(--rich-black);
@@ -383,6 +583,8 @@ a {
 
 .form-shell {
   max-width: 560px;
+  margin: 0 auto;
+  text-align: center;
 }
 
 .form-headline {
@@ -397,6 +599,7 @@ a {
 .waitlist-form {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 22px;
 }
 
@@ -409,6 +612,7 @@ a {
   color: var(--cream);
   font-family: var(--font-body);
   font-size: 16px;
+  text-align: center;
 }
 
 .email-input::placeholder {
@@ -433,6 +637,7 @@ a {
   border: 0;
   padding: 0;
   margin: 0;
+  width: 100%;
 }
 
 .price-signal legend {
@@ -440,6 +645,8 @@ a {
   font-size: 14px;
   color: var(--cream-dim);
   margin-bottom: 14px;
+  text-align: center;
+  width: 100%;
 }
 
 .price-signal .optional {
@@ -489,13 +696,13 @@ a {
 
 .submit-button {
   margin-top: 6px;
-  align-self: flex-start;
 }
 
 .form-message {
   min-height: 1.4em;
   font-size: 14.5px;
   margin: 0;
+  text-align: center;
 }
 
 .form-message[data-state="ok"] {
@@ -507,10 +714,11 @@ a {
 }
 
 .fine-print {
-  margin-top: 24px;
+  margin: 24px auto 0;
   font-size: 13px;
   color: var(--cream-faint);
   max-width: 46ch;
+  text-align: center;
 }
 
 .fine-print a {
@@ -538,6 +746,10 @@ a {
   }
 }
 
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
 .site-footer {
   background: var(--rich-black);
   border-top: 1px solid var(--gold-line);
@@ -547,9 +759,10 @@ a {
 .footer-inner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  justify-content: center;
+  gap: 16px 28px;
   flex-wrap: wrap;
+  text-align: center;
 }
 
 .footer-brand {
@@ -574,6 +787,10 @@ a {
 .footer-nav a:hover {
   color: var(--dark-gold);
 }
+
+/* ==========================================================================
+   Rechtsseiten (Impressum, Datenschutz, Danke)
+   ========================================================================== */
 
 .legal-page {
   max-width: 760px;
@@ -646,26 +863,24 @@ a {
   max-width: 480px;
 }
 
-.danke-inner .hero-logo {
+.danke-inner .logo-mark {
   margin: 0 auto 32px;
 }
 
-@media (min-width: 1024px) {
-  .section-image-content {
-    max-width: 640px;
-  }
-}
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
 
 @media (max-width: 767px) {
-  .bundle-grid {
-    grid-template-columns: 1fr;
-  }
-
   .price-options {
     grid-template-columns: 1fr 1fr;
   }
 
   .hero-headline {
     max-width: 100%;
+  }
+
+  .bundle-panel {
+    max-width: 32ch;
   }
 }
