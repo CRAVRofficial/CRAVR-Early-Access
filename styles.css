@@ -225,7 +225,12 @@ a {
 .hero-logo-zone {
   position: relative;
   z-index: 2;
-  height: clamp(260px, 38vh, 440px);
+  /* dvh statt vh: iOS Safari berechnet "vh" gegen die groesstmoegliche
+     Ansicht (Adressleiste eingeklappt), nicht gegen das, was mit
+     eingeblendeter Adressleiste tatsaechlich zu sehen ist. "dvh" richtet
+     sich nach der jeweils tatsaechlich sichtbaren Flaeche und liefert
+     darum hier ein zuverlaessiges Mass, siehe auch .hero-content. */
+  height: clamp(260px, 38dvh, 440px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -249,8 +254,14 @@ a {
      dessen leerer Rand). Reine Farbaenderung reicht hier nicht als Signal,
      da der Hero unten ohnehin ins Dunkle ausblendet - ein paar sichtbare
      Buchstaben sind ein deutlich staerkerer, unaufdringlicher Hinweis auf
-     "hier geht es weiter" als ein Scroll-Pfeil oder Hinweistext. */
-  min-height: 80vh;
+     "hier geht es weiter" als ein Scroll-Pfeil oder Hinweistext.
+     dvh statt vh: "vh" wird auf iOS Safari gegen die groesstmoegliche
+     Ansicht berechnet (Adressleiste eingeklappt), nicht gegen das, was mit
+     eingeblendeter Adressleiste tatsaechlich sichtbar ist. Dadurch fuellte
+     der Hero dort trotz "80vh" wieder die ganze sichtbare Flaeche und die
+     naechste Zeile blieb unsichtbar. "dvh" folgt der tatsaechlich
+     sichtbaren Flaeche. */
+  min-height: 80dvh;
   padding: clamp(24px, 6vh, 64px) var(--edge) clamp(48px, 8vh, 96px);
   display: flex;
   flex-direction: column;
