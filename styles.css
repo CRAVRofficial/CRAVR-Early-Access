@@ -448,54 +448,20 @@ body.js-flying .cta-anchor-hidden {
 .bundle-scroller {
   position: relative;
   background: var(--rich-black);
-  overflow: hidden;
-}
-
-/* Der Lichtschimmer sitzt bewusst INNERHALB der gepinnten Flaeche, nicht im
-   sehr hohen Scroller selbst: waere er dort absolut positioniert, laege er
-   grossteils ausserhalb des kleinen Fensters, das die Sticky-Technik gerade
-   zeigt, und war praktisch nie zu sehen. So bleibt er immer im Bild, kreist
-   langsam um das Textfeld herum, ohne die Schrift zu verdecken. */
-
-.bundle-glow {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: visible;
-  transform-origin: 50% 50%;
-  animation: bundle-glow-spin 48s linear infinite;
-}
-
-.bundle-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(4px);
-  background: radial-gradient(circle, rgb(212 180 112 / 85%) 0%, rgb(184 154 90 / 38%) 50%, transparent 76%);
-}
-
-.bundle-orb-1 { width: 15vh; height: 15vh; top: 10%;  left: 10%; }
-.bundle-orb-2 { width: 8vh;  height: 8vh;  top: 16%;  right: 12%; }
-.bundle-orb-3 { width: 11vh; height: 11vh; bottom: 18%; left: 7%; }
-.bundle-orb-4 { width: 7vh;  height: 7vh;  bottom: 10%; right: 16%; }
-.bundle-orb-5 { width: 9vh;  height: 9vh;  top: 46%;  left: 4%; }
-.bundle-orb-6 { width: 6vh;  height: 6vh;  top: 40%;  right: 6%; }
-
-@keyframes bundle-glow-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .bundle-glow {
-    animation: none;
-  }
 }
 
 .bundle-anchor {
   height: 112vh;
 }
+
+/* Overflow:hidden sitzt bewusst auf der gepinnten Flaeche selbst und NICHT
+   auf .bundle-scroller: overflow auf einem VORFAHREN eines position:sticky-
+   Elements zaehlt fuer den Browser als eigener Scroll-Container und bricht
+   damit das Andocken komplett - der Effekt zeigte dann ununterbrochen nur
+   noch die erste Karte, weil das eigentliche Sticky/Scroll-Zusammenspiel
+   nicht mehr funktionierte. Auf dem gepinnten Element selbst angewendet
+   clippt es nur dessen eigenen Inhalt (den Lichtschimmer), ohne die
+   Verankerung nach aussen zu beeinflussen. */
 
 .bundle-sticky {
   position: sticky;
@@ -504,6 +470,70 @@ body.js-flying .cta-anchor-hidden {
   display: flex;
   align-items: center;
   z-index: 1;
+  overflow: hidden;
+}
+
+/* Der Lichtschimmer sitzt bewusst INNERHALB der gepinnten Flaeche, nicht im
+   sehr hohen Scroller selbst: waere er dort absolut positioniert, laege er
+   grossteils ausserhalb des kleinen Fensters, das die Sticky-Technik gerade
+   zeigt, und war praktisch nie zu sehen. So bleibt er immer im Bild. Zwei
+   Bewegungen ueberlagern sich: die ganze Gruppe kreist langsam (Spirale),
+   jeder einzelne Lichtpunkt schwebt zusaetzlich auf und ab (der gewuenschte
+   "Tanz nach unten"). Beides rein zeitgesteuert, nicht an den Scroll
+   gekoppelt - waehrend der eigentlichen Verweildauer in diesem Abschnitt ist
+   die Bewegung so durchgehend sichtbar, ohne dass dafuer die Grafikleistung
+   bei jedem Scroll-Ereignis neu berechnet werden muss.
+   Die Schrift bleibt unbedeckt, da alle Lichtpunkte an den Raendern liegen. */
+
+.bundle-glow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  animation: bundle-glow-spin 26s linear infinite;
+}
+
+.bundle-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(4px);
+  background: radial-gradient(circle, rgb(212 180 112 / 85%) 0%, rgb(184 154 90 / 38%) 50%, transparent 76%);
+  animation: bundle-orb-bob 7s ease-in-out infinite alternate;
+}
+
+.bundle-orb-1 { width: 15vh; height: 15vh; top: 8%;  left: 9%;  animation-delay: 0s; }
+.bundle-orb-2 { width: 8vh;  height: 8vh;  top: 14%; right: 10%; animation-delay: -1.2s; }
+.bundle-orb-3 { width: 11vh; height: 11vh; bottom: 16%; left: 6%; animation-delay: -2.4s; }
+.bundle-orb-4 { width: 7vh;  height: 7vh;  bottom: 8%; right: 14%; animation-delay: -3.6s; }
+.bundle-orb-5 { width: 9vh;  height: 9vh;  top: 44%; left: 3%;  animation-delay: -4.8s; }
+.bundle-orb-6 { width: 6vh;  height: 6vh;  top: 38%; right: 4%; animation-delay: -6s; }
+
+@keyframes bundle-glow-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes bundle-orb-bob {
+  from {
+    transform: translateY(-3vh);
+    opacity: 0.55;
+  }
+  to {
+    transform: translateY(9vh);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bundle-glow {
+    animation: none;
+  }
+
+  .bundle-orb {
+    animation: none;
+  }
 }
 
 .bundle-inner {
@@ -586,10 +616,10 @@ body.js-flying .cta-anchor-hidden {
 .bundle-ritual {
   position: relative;
   z-index: 1;
-  padding: clamp(56px, 9vh, 88px) 0;
+  padding: clamp(56px, 9vh, 88px) var(--edge);
   text-align: center;
   font-size: 16px;
-  color: var(--cream-faint);
+  color: var(--cream-dim);
   font-weight: 300;
   max-width: 56ch;
   margin: 0 auto;
