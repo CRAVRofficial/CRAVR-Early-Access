@@ -101,6 +101,114 @@ a {
   background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.9%22 numOctaves=%222%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22/%3E%3C/svg%3E");
 }
 
+/* --- Intro: dunkler Vollbild-Screen, auf dem sich das Logo aufbaut, bevor
+   die eigentliche Seite erscheint. Choreographie in intro.js, siehe dort. --- */
+.intro {
+  display: none;
+}
+
+html.intro-run .intro {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--rich-black);
+  overflow: hidden;
+}
+
+html.intro-run body {
+  overflow: hidden;
+}
+
+.intro::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(13, 31, 23, 0.55) 0%, rgba(10, 10, 10, 0.9) 62%, #0a0a0a 100%);
+  opacity: 0;
+  animation: intro-glow 1.2s ease-out both;
+}
+
+@keyframes intro-glow {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.intro-mark {
+  position: relative;
+  z-index: 1;
+  width: min(46vw, 380px);
+  height: auto;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.intro-mark path,
+.intro-mark rect,
+.intro-mark circle {
+  stroke-width: 2.4;
+}
+
+.intro-mark .piece,
+.intro-mark .draw {
+  opacity: 0;
+}
+
+.intro-mark .piece {
+  transform-origin: center;
+}
+
+.intro-mark.is-active .piece {
+  animation-name: intro-piece-in;
+  animation-duration: 0.55s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: both;
+}
+
+.intro-mark.is-active .draw {
+  animation-name: intro-draw-in;
+  animation-duration: 0.75s;
+  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  animation-fill-mode: both;
+}
+
+@keyframes intro-piece-in {
+  from { opacity: 0; transform: scale(0.82); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes intro-draw-in {
+  from { opacity: 1; }
+  to   { opacity: 1; stroke-dashoffset: 0; }
+}
+
+.intro-glow-pulse {
+  animation: intro-pulse 0.7s ease-out both;
+}
+
+@keyframes intro-pulse {
+  0%   { filter: drop-shadow(0 0 0 rgba(184, 154, 90, 0)); }
+  40%  { filter: drop-shadow(0 0 22px rgba(184, 154, 90, 0.55)); }
+  100% { filter: drop-shadow(0 0 0 rgba(184, 154, 90, 0)); }
+}
+
+.intro.is-exiting {
+  animation: intro-exit 0.8s cubic-bezier(0.6, 0, 0.3, 1) both;
+}
+
+@keyframes intro-exit {
+  from { opacity: 1; transform: scale(1) rotate(0deg); }
+  to   { opacity: 0; transform: scale(1.22) rotate(-7deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.intro-run .intro { display: none; }
+  html.intro-run body { overflow: visible; }
+}
+
 .section-inner {
   max-width: var(--max-width);
   margin: 0 auto;
