@@ -95,10 +95,6 @@
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   }
 
-  function easeOutCubic(t) {
-    return 1 - Math.pow(1 - t, 3);
-  }
-
   // Reveal-on-scroll: motiviert durch die Reihenfolge Haltung-vor-Produkt,
   // jeder Abschnitt tritt einzeln in Erscheinung statt alles auf einmal zu zeigen.
   var revealTargets = document.querySelectorAll(".reveal");
@@ -170,15 +166,12 @@
   }
 
   // ==========================================================================
-  // Flug-Animation: Logo und Button wandern in den festen Kopfbereich.
+  // Flug-Animation: der Button wandert in den festen Kopfbereich.
+  // (Das Logo hat eine eigene, unabhaengige Positionierung in intro.js -
+  // es dockt aus der Intro-Choreographie heraus, nicht per Scroll-Strecke
+  // ab dem Hero. Der Kopfbereich-Slot dafuer bleibt derselbe.)
   //
-  // Logo: startet sofort beim Laden (Eingangsanimation, zeitgesteuert) im
-  // kleinen Logo-Streifen oben und dockt an, sobald man aus diesem Streifen
-  // herausscrollt. Es bleibt vom ersten Pixel an ein fixiertes, per Skript
-  // aktualisiertes Element, aber nur fuer die kurze Strecke des Logo-
-  // Streifens - danach wird es eingefroren und nicht mehr neu berechnet.
-  //
-  // Button: bleibt WAEHREND DER GESAMTEN VERWEILDAUER ein ganz normales,
+  // Der Button bleibt WAEHREND DER GESAMTEN VERWEILDAUER ein ganz normales,
   // unbewegtes Element im Textfluss (sein Anker bleibt sichtbar, das
   // fixierte Flug-Element bleibt unsichtbar und inaktiv). Ein fixiertes
   // Element, das bei jedem Scroll-Ereignis per Skript neu positioniert wird,
@@ -187,55 +180,28 @@
   // versetzt). Der Button wechselt darum erst UNMITTELBAR VOR dem
   // eigentlichen Flug auf das fixierte Element, bleibt also die meiste Zeit
   // ein normales Element ohne jedes Zitter-Risiko, und wird nach dem
-  // Andocken ebenfalls eingefroren.
+  // Andocken eingefroren.
   //
-  // Beide Bewegungen folgen demselben Muster: solange der jeweilige
-  // Flugabschnitt noch nicht begonnen hat, wird die Position eins zu eins
-  // aus der normalen Seiten-Scrollbewegung abgeleitet (kein Sprung). Sobald
-  // der Abschnitt beginnt, wird der zu diesem Zeitpunkt gueltige Startpunkt
-  // eingefroren und nur noch zwischen diesem festen Punkt und dem Zielpunkt
-  // interpoliert. Ein Punkt, der gleichzeitig Ziel einer Interpolation UND
-  // Ausgangspunkt einer fortlaufenden Berechnung ist, erzeugt sonst eine
-  // unbeabsichtigte Kurve statt einer geraden Bewegung.
+  // Solange der Flugabschnitt noch nicht begonnen hat, wird die Position
+  // eins zu eins aus der normalen Seiten-Scrollbewegung abgeleitet (kein
+  // Sprung). Sobald er beginnt, wird der zu diesem Zeitpunkt gueltige
+  // Startpunkt eingefroren und nur noch zwischen diesem festen Punkt und dem
+  // Zielpunkt interpoliert.
   //
-  // Bei reduzierter Bewegung oder ohne JavaScript bleibt alles beim
-  // statischen Ausgangszustand: das grosse Logo oben, der Button im Hero,
-  // der Kopfbereich bleibt leer. Kein Informationsverlust, nur ohne die
-  // Flug-Inszenierung.
+  // Bei reduzierter Bewegung oder ohne JavaScript bleibt der Button im Hero,
+  // der Kopfbereich-Slot dafuer bleibt leer. Kein Informationsverlust, nur
+  // ohne die Flug-Inszenierung.
   // ==========================================================================
 
-  var logoAnchor = document.querySelector("[data-logo-anchor]");
   var ctaAnchor = document.querySelector("[data-cta-anchor]");
-  var logoFly = document.querySelector("[data-logo-fly]");
   var ctaFly = document.querySelector("[data-cta-fly]");
-  var logoSlot = document.querySelector("[data-header-logo-slot]");
   var ctaSlot = document.querySelector("[data-header-cta-slot]");
-  var logoZone = document.querySelector("[data-intro-stage]");
   var heroSection = document.querySelector("[data-hero]");
 
-  if (
-    !reduceMotion &&
-    logoAnchor &&
-    ctaAnchor &&
-    logoFly &&
-    ctaFly &&
-    logoSlot &&
-    ctaSlot &&
-    logoZone &&
-    heroSection
-  ) {
+  if (!reduceMotion && ctaAnchor && ctaFly && ctaSlot && heroSection) {
     document.body.classList.add("js-flying");
 
-    // Bewusst deutlich groesser als jede sichtbare Zielgroesse: ein SVG, das
-    // als <img> geladen wird, rastert der Browser einmalig in dieser
-    // CSS-Groesse. Nur verkleinern (nie vergroessern) haelt es scharf, siehe
-    // ausfuehrliche Begruendung bei .logo-fly in styles.css.
-    var LOGO_NATIVE_SIZE = 320;
-    var DOCKED_LOGO_SIZE = 40;
-    var ENTRANCE_MS = 950;
-    var entranceStartTime = performance.now();
     var geometry = {};
-    var logoSettled = false;
     var ctaPhase = "anchor"; // "anchor" -> "flying" -> "docked"
 
     function measure() {
@@ -247,33 +213,22 @@
       ctaSlot.style.height = ctaFly.offsetHeight + "px";
 
       var scrollY = window.scrollY;
-      var logoAnchorRect = logoAnchor.getBoundingClientRect();
       var ctaAnchorRect = ctaAnchor.getBoundingClientRect();
-      var logoSlotRect = logoSlot.getBoundingClientRect();
       var ctaSlotRect = ctaSlot.getBoundingClientRect();
       var heroRect = heroSection.getBoundingClientRect();
 
-      var logoAnchorDocY = logoAnchorRect.top + scrollY + logoAnchorRect.height / 2;
       var ctaAnchorDocY = ctaAnchorRect.top + scrollY + ctaAnchorRect.height / 2;
       var heroBottomDocY = heroRect.bottom + scrollY;
 
-      var logoZoneLength = Math.max(logoZone.offsetHeight, 1);
       // Die eigentliche Flugstrecke des Buttons ist bewusst kurz (er soll die
       // ganze Zeit an seinem Platz im Hero verweilen und erst kurz vor dem
       // endgueltigen Verschwinden des Hero losfliegen), unabhaengig davon,
       // wie hoch der Bildschirm gerade ist.
       var CTA_FLIGHT_PX = 320;
       var ctaZoneLength = CTA_FLIGHT_PX;
-      var ctaZoneStart = Math.max(heroBottomDocY - CTA_FLIGHT_PX, logoZoneLength);
+      var ctaZoneStart = Math.max(heroBottomDocY - CTA_FLIGHT_PX, 0);
 
       geometry = {
-        logoZoneLength: logoZoneLength,
-        logoStartX: logoAnchorRect.left + logoAnchorRect.width / 2,
-        logoFrozenY: logoAnchorDocY, // Zone beginnt bei scrollY 0, daher = natuerlicher Wert bei 0
-        logoStartSize: logoAnchorRect.width,
-        logoSlotX: logoSlotRect.left + logoSlotRect.width / 2,
-        logoSlotY: logoSlotRect.top + logoSlotRect.height / 2,
-
         ctaAnchorDocY: ctaAnchorDocY,
         ctaZoneStart: ctaZoneStart,
         ctaZoneLength: ctaZoneLength,
@@ -286,9 +241,7 @@
       };
 
       // Nach einer Neuvermessung (z. B. Fenstergroesse geaendert) koennte
-      // sich die eingefrorene Zielposition verschoben haben, darum beide
-      // Elemente einmal neu einrechnen lassen.
-      logoSettled = false;
+      // sich die eingefrorene Zielposition verschoben haben.
       if (ctaPhase === "docked") {
         ctaPhase = "flying";
       }
@@ -310,30 +263,7 @@
       ticking = false;
       var scrollY = window.scrollY;
 
-      // Logo: Eingangsanimation (zeitgesteuert) mal Andock-Fortschritt (scrollgesteuert).
-      // Einmal vollstaendig angekommen, wird nichts mehr neu berechnet.
-      var entranceT = clamp01((performance.now() - entranceStartTime) / ENTRANCE_MS);
-      var entranceDone = entranceT >= 1;
-      var logoProgress = clamp01(scrollY / geometry.logoZoneLength);
-
-      if (!logoSettled) {
-        var entranceEase = easeOutCubic(entranceT);
-        var logoEase = easeInOutCubic(logoProgress);
-
-        var logoX = lerp(geometry.logoStartX, geometry.logoSlotX, logoEase);
-        var logoY = lerp(geometry.logoFrozenY, geometry.logoSlotY, logoEase);
-        var logoDockSize = lerp(geometry.logoStartSize, DOCKED_LOGO_SIZE, logoEase);
-        var logoScale = (logoDockSize / LOGO_NATIVE_SIZE) * lerp(0.55, 1, entranceEase);
-
-        logoFly.style.opacity = String(entranceEase);
-        logoFly.style.transform =
-          "translate3d(" + (logoX - LOGO_NATIVE_SIZE / 2) + "px, " + (logoY - LOGO_NATIVE_SIZE / 2) + "px, 0) " +
-          "scale(" + logoScale + ")";
-
-        logoSettled = entranceDone && logoProgress >= 1;
-      }
-
-      // Button: waehrend der Verweildauer bleibt das eigentliche Anker-Element
+      // Waehrend der Verweildauer bleibt das eigentliche Anker-Element
       // sichtbar und unbewegt (kein Zittern moeglich), das fixierte Element
       // ist inaktiv. Erst in der kurzen Flugstrecke unmittelbar vor dem
       // Verschwinden des Hero wird umgeschaltet.
@@ -374,17 +304,6 @@
     applyFrame();
     window.addEventListener("scroll", requestFrame, { passive: true });
 
-    // Eigenständige Schleife nur fuer die Eingangsanimation, damit das Logo
-    // auch dann sichtbar materialisiert, wenn niemand in den ersten Sekunden
-    // scrollt.
-    function entranceLoop() {
-      applyFrame();
-      if (performance.now() - entranceStartTime < ENTRANCE_MS) {
-        window.requestAnimationFrame(entranceLoop);
-      }
-    }
-    window.requestAnimationFrame(entranceLoop);
-
     var resizeTimer = null;
     window.addEventListener(
       "resize",
@@ -397,28 +316,5 @@
       },
       { passive: true }
     );
-
-    // Automatischer Weiterscroll aus dem kleinen Logo-Streifen zum Hauptbereich,
-    // sobald die Logo-Animation Zeit hatte anzukommen. Bricht sofort ab,
-    // sobald der Mensch selbst scrollt, tippt oder eine Taste drueckt, damit
-    // die Automatik nie gegen eine echte Eingabe ankaempft.
-    var userInteracted = false;
-    var cancelEvents = ["wheel", "touchstart", "keydown", "pointerdown"];
-
-    function markInteracted() {
-      userInteracted = true;
-      cancelEvents.forEach(function (type) {
-        window.removeEventListener(type, markInteracted);
-      });
-    }
-    cancelEvents.forEach(function (type) {
-      window.addEventListener(type, markInteracted, { passive: true, once: true });
-    });
-
-    window.setTimeout(function () {
-      if (!userInteracted && window.scrollY < 20) {
-        window.scrollTo({ top: geometry.logoZoneLength, behavior: "smooth" });
-      }
-    }, 1500);
   }
 })();

@@ -101,49 +101,55 @@ a {
   background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.9%22 numOctaves=%222%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22/%3E%3C/svg%3E");
 }
 
-/* --- Intro: dunkler Vollbild-Screen, auf dem sich das Logo aufbaut, bevor
-   die eigentliche Seite erscheint. Choreographie in intro.js, siehe dort. --- */
-.intro {
+/* ==========================================================================
+   Intro: dunkler Vollbild-Screen, auf dem sich das Logo aufbaut, dockt danach
+   in die Kopfzeile (kleines Logo dort). Scrollt man wieder ganz nach oben,
+   laeuft dieselbe Bewegung rueckwaerts, gesteuert von der Scroll-Position.
+   Choreographie/Positionierung in intro.js, siehe dort.
+
+   Ohne JavaScript oder bei reduzierter Bewegung: der Backdrop bleibt
+   verborgen, das Logo steht als normales, bereits fertig gezeichnetes
+   Element oben auf der Seite (keine Positionierung, keine Bewegung). --- */
+
+.intro-backdrop {
   display: none;
 }
 
-html.intro-run .intro {
+html.intro-run .intro-backdrop {
+  display: block;
   position: fixed;
   inset: 0;
   z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--rich-black);
-  overflow: hidden;
+  background: radial-gradient(ellipse at center, rgba(13, 31, 23, 0.55) 0%, rgba(10, 10, 10, 0.9) 62%, #0a0a0a 100%);
 }
 
 html.intro-run body {
   overflow: hidden;
 }
 
-.intro::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at center, rgba(13, 31, 23, 0.55) 0%, rgba(10, 10, 10, 0.9) 62%, #0a0a0a 100%);
-  opacity: 0;
-  animation: intro-glow 1.2s ease-out both;
-}
-
-@keyframes intro-glow {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+html.intro-run.intro-scrollable body {
+  overflow: visible;
 }
 
 .intro-mark {
-  position: relative;
-  z-index: 1;
+  display: block;
   width: min(46vw, 380px);
   height: auto;
+  /* Nur relevant ohne JS/bei reduzierter Bewegung: der fixierte Kopfbereich
+     legt sich sonst ueber den oberen Rand des Logos. */
+  margin: calc(var(--header-height) + clamp(24px, 6vh, 64px)) auto 0;
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
+  filter: drop-shadow(0 0 18px rgba(184, 154, 90, 0.35));
+}
+
+html.intro-run .intro-mark {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1001;
+  margin: 0;
 }
 
 .intro-mark path,
@@ -152,61 +158,18 @@ html.intro-run body {
   stroke-width: 2.4;
 }
 
-.intro-mark .piece,
-.intro-mark .draw {
+html.intro-run .intro-mark .piece,
+html.intro-run .intro-mark .draw {
   opacity: 0;
 }
 
-.intro-mark .piece {
-  transform-origin: center;
-}
-
-.intro-mark.is-active .piece {
-  animation-name: intro-piece-in;
-  animation-duration: 0.55s;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  animation-fill-mode: both;
-}
-
-.intro-mark.is-active .draw {
-  animation-name: intro-draw-in;
-  animation-duration: 0.75s;
-  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
-  animation-fill-mode: both;
-}
-
-@keyframes intro-piece-in {
-  from { opacity: 0; transform: scale(0.82); }
-  to   { opacity: 1; transform: scale(1); }
-}
-
-@keyframes intro-draw-in {
-  from { opacity: 1; }
-  to   { opacity: 1; stroke-dashoffset: 0; }
-}
-
-.intro-glow-pulse {
-  animation: intro-pulse 0.7s ease-out both;
-}
-
-@keyframes intro-pulse {
-  0%   { filter: drop-shadow(0 0 0 rgba(184, 154, 90, 0)); }
-  40%  { filter: drop-shadow(0 0 22px rgba(184, 154, 90, 0.55)); }
-  100% { filter: drop-shadow(0 0 0 rgba(184, 154, 90, 0)); }
-}
-
-.intro.is-exiting {
-  animation: intro-exit 0.8s cubic-bezier(0.6, 0, 0.3, 1) both;
-}
-
-@keyframes intro-exit {
-  from { opacity: 1; transform: scale(1); }
-  to   { opacity: 0; transform: scale(1.18); }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  html.intro-run .intro { display: none; }
-  html.intro-run body { overflow: visible; }
+  html.intro-run .intro-backdrop {
+    display: none;
+  }
+  html.intro-run body {
+    overflow: visible;
+  }
 }
 
 .section-inner {
@@ -259,9 +222,9 @@ html.intro-run body {
 }
 
 /* ==========================================================================
-   Fester Kopfbereich: durchgehend sichtbar. Logo und Button "docken" hier
-   an, siehe .logo-fly / .cta-fly. Die beiden Slots selbst bleiben unsichtbar,
-   sie markieren nur die Zielposition fuer die Flug-Animation.
+   Fester Kopfbereich: durchgehend sichtbar. Logo (intro.js) und Button
+   (.cta-fly / script.js) docken hier an. Die beiden Slots selbst bleiben
+   unsichtbar, sie markieren nur die Zielposition fuer die Flug-Animation.
    ========================================================================== */
 
 .site-header {
@@ -304,9 +267,10 @@ html.intro-run body {
 }
 
 /* ==========================================================================
-   Hero: ein Bild, zwei Zonen. Oben ein kleiner Streifen nur fuer das Logo,
-   darunter der eigentliche Hero mit Headline. Beide teilen sich dasselbe
-   Architekturbild als durchgehenden Hintergrund.
+   Hero: ein Bild, die Headline beginnt direkt darauf. Das grosse Logo lebt
+   nicht mehr hier, sondern kommt aus der Intro-Choreographie (intro.js),
+   die ihr eigenes fixiertes Element davorlegt und danach in die Kopfzeile
+   dockt.
    ========================================================================== */
 
 .hero {
@@ -330,56 +294,6 @@ html.intro-run body {
     linear-gradient(180deg, rgb(10 10 10 / 45%) 0%, rgb(10 10 10 / 40%) 45%, rgb(10 10 10 / 82%) 100%);
 }
 
-.hero-logo-zone {
-  position: relative;
-  z-index: 2;
-  /* dvh statt vh: iOS Safari berechnet "vh" gegen die groesstmoegliche
-     Ansicht (Adressleiste eingeklappt), nicht gegen das, was mit
-     eingeblendeter Adressleiste tatsaechlich zu sehen ist. "dvh" richtet
-     sich nach der jeweils tatsaechlich sichtbaren Flaeche und liefert
-     darum hier ein zuverlaessiges Mass, siehe auch .hero-content. */
-  height: clamp(260px, 38dvh, 440px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.logo-anchor {
-  /* Groesser als zuvor: das Logo enthaelt jetzt zusaetzlich Schriftzug und
-     Lorbeerkranz (siehe assets/logo.svg), auf Bennetts Wunsch praesenter. */
-  width: clamp(200px, 28vw, 340px);
-  height: auto;
-  filter: drop-shadow(0 2px 4px rgb(10 10 10 / 70%)) drop-shadow(0 0 26px rgb(10 10 10 / 65%));
-  /* Eingangsanimation beim ersten Laden: sanftes Herauswachsen aus der
-     Mitte mit einem goldenen Aufgluehen, das in den normalen Schatten
-     ausklingt. cubic-bezier(0.16,1,0.3,1) bremst weich ohne Ueberschwingen
-     ("expo-out"), bewusst kein Drehen oder Wippen, das sollte edel wirken,
-     nicht verspielt. */
-  animation: logo-entrance 1.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-@keyframes logo-entrance {
-  0% {
-    opacity: 0;
-    transform: scale(0.8);
-    filter: drop-shadow(0 2px 4px rgb(10 10 10 / 70%)) drop-shadow(0 0 60px rgb(184 154 90 / 85%));
-  }
-  60% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-    filter: drop-shadow(0 2px 4px rgb(10 10 10 / 70%)) drop-shadow(0 0 26px rgb(10 10 10 / 65%));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .logo-anchor {
-    animation: none;
-  }
-}
-
 .hero-content {
   position: relative;
   z-index: 2;
@@ -392,7 +306,10 @@ html.intro-run body {
      dessen leerer Rand). Reine Farbaenderung reicht hier nicht als Signal,
      da der Hero unten ohnehin ins Dunkle ausblendet - ein paar sichtbare
      Buchstaben sind ein deutlich staerkerer, unaufdringlicher Hinweis auf
-     "hier geht es weiter" als ein Scroll-Pfeil oder Hinweistext.
+     "hier geht es weiter" als ein Scroll-Pfeil oder Hinweistext. Der
+     urspruengliche Grund (Platz fuer den automatischen Weiterscroll aus
+     einem separaten Logo-Streifen) ist mit dessen Entfernen entfallen, das
+     Mass bleibt trotzdem passend.
      dvh statt vh: "vh" wird auf iOS Safari gegen die groesstmoegliche
      Ansicht berechnet (Adressleiste eingeklappt), nicht gegen das, was mit
      eingeblendeter Adressleiste tatsaechlich sichtbar ist. Dadurch fuellte
@@ -427,29 +344,22 @@ html.intro-run body {
   font-weight: 300;
 }
 
-/* ---- Fliegendes Logo und fliegender Button ----
-   Beide sind fest positioniert, ihre Position/Groesse wird per
-   Scroll-Fortschritt berechnet (script.js). Ohne JavaScript oder bei
-   reduzierter Bewegung bleiben sie leer, die Anker selbst tragen dann die
-   sichtbare Darstellung.
+/* ---- Fliegender Button ----
+   Fest positioniert, Position/Groesse wird per Scroll-Fortschritt berechnet
+   (script.js). Ohne JavaScript oder bei reduzierter Bewegung bleibt er leer,
+   der Anker im Hero traegt dann die sichtbare Darstellung.
 
-   Das Logo fliegt vom allerersten Scroll-Pixel an (kein Ruhepunkt vorher),
-   sein Anker bleibt darum durchgehend unsichtbar, sobald JavaScript
-   uebernimmt. Der Button dagegen soll waehrend des gesamten Verweilens im
-   Hero ganz normal mit der Seite scrollen, nicht ueber ein fixiertes,
-   staendig per Skript aktualisiertes Element - das fuehrt auf iOS Safari
-   zu sichtbarem Zittern. Darum bleibt sein Anker sichtbar und das fliegende
-   Element unsichtbar, bis der eigentliche Flug beginnt; script.js schaltet
-   dort testfrei um (siehe .cta-anchor-hidden / .cta-fly-visible).
+   Der Button soll waehrend des gesamten Verweilens im Hero ganz normal mit
+   der Seite scrollen, nicht ueber ein fixiertes, staendig per Skript
+   aktualisiertes Element - das fuehrt auf iOS Safari zu sichtbarem Zittern.
+   Darum bleibt sein Anker sichtbar und das fliegende Element unsichtbar,
+   bis der eigentliche Flug beginnt; script.js schaltet dort erst um (siehe
+   .cta-anchor-hidden / .cta-fly-visible).
 
-   Die Bildgroesse des Logos ist bewusst groesszuegig (siehe --logo-native
-   Nutzung in script.js): ein SVG, das als <img> geladen wird, rastert der
-   Browser einmalig in der aktuellen CSS-Groesse. Skaliert man es per
-   transform anschliessend groesser, vergroessert man dieses Rasterbild und
-   es wirkt unscharf. Start immer groesser als jede sichtbare Zielgroesse,
-   nur verkleinert (nie vergroessert) halten es gestochen scharf. */
+   Das Logo hat kein Pendant mehr hier: es ist ein eigenstaendiges, fest
+   positioniertes SVG (.intro-mark, siehe oben), das intro.js direkt
+   bewegt/skaliert, kein <img>-Duplikat mit eigener CSS-Klasse mehr. */
 
-.logo-fly,
 .cta-fly {
   position: fixed;
   top: 0;
@@ -458,24 +368,7 @@ html.intro-run body {
   opacity: 0;
   pointer-events: none;
   will-change: transform;
-}
-
-.logo-fly {
-  width: 320px;
-  height: 320px;
-}
-
-.cta-fly {
   white-space: nowrap;
-}
-
-body.js-flying .logo-fly {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-body.js-flying .logo-anchor {
-  visibility: hidden;
 }
 
 body.js-flying .cta-fly-visible {

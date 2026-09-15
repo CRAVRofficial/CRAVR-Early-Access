@@ -23,8 +23,13 @@
 </head>
 <body>
 
-  <div class="intro" id="intro">
-    <svg class="intro-mark" viewBox="0 0 1080 1080" aria-hidden="true" focusable="false">
+  <div class="intro-backdrop" id="intro-backdrop" aria-hidden="true"></div>
+
+  <!-- Das Logo selbst: lebt dauerhaft im DOM (wird nach der Intro nicht
+       entfernt), dockt nach der Zeichnen-Choreographie in die Kopfzeile und
+       dreht die ganze Bewegung um, sobald man wieder ganz nach oben
+       scrollt. Choreographie/Positionierung in intro.js, siehe dort. -->
+  <svg class="intro-mark" id="intro-mark" viewBox="0 0 1080 1080" aria-hidden="true" focusable="false">
       <g id="mark-sanduhr">
         <g id="fundament-unten">
           <rect class="piece" style="fill:none;stroke:#b89a5a" x="386" y="559.29999" width="326.60001" height="17.4" rx="1.9" ry="1.9" />
@@ -88,14 +93,14 @@
         <path class="draw" id="letter-c" style="fill:none;stroke:#b89a5a" transform="scale(1.0039946,0.9960213)" d="m 321.99,709.39 -2.71,35.47 q -5.87,9.71 -14.91,17.39 -8.81,7.45 -21.01,11.97 -11.97,4.29 -27.56,4.29 -23.49,-0.23 -41.79,-10.39 -18.3,-10.17 -28.69,-28.46 -10.17,-18.52 -10.17,-43.6 0,-24.62 10.17,-42.92 10.17,-18.52 28.46,-28.69 18.52,-10.39 43.37,-10.39 16.72,0 30.04,4.52 13.55,4.29 23.49,10.84 l 4.52,31.85 h -2.03 q -4.97,-19.88 -20.33,-30.04 -15.36,-10.39 -35.69,-10.39 -19.88,0 -34.56,9.49 -14.46,9.26 -22.59,26.2 -7.91,16.72 -7.91,39.31 0,22.59 7.91,39.53 8.13,16.94 22.36,26.43 14.46,9.49 33.43,9.94 16.04,0 29.59,-5.87 13.78,-6.1 23.04,-19.65 9.26,-13.78 11.75,-36.82 z" />
         <path class="draw" id="letter-v" style="fill:none;stroke:#b89a5a" d="m 715.19,772.17 -69.75,-159.3 h 19.12 l 55.12,137.93 z m 0,0 -2.02,-15.75 59.85,-144.22 h 13.5 l -60.98,136.8 q 0,0 -1.35,2.92 -1.12,2.7 -2.92,6.75 -1.57,4.05 -2.92,7.88 -1.12,3.83 -1.12,5.62 z m 51.52,-144.45 q 2.48,-6.75 -0.9,-10.35 -3.38,-3.6 -7.65,-3.6 h -2.02 v -2.25 h 45.23 v 2.25 q 0,0 -1.12,0 -0.9,0 -0.9,0 -4.95,0 -10.57,3.38 -5.62,3.15 -9.22,10.8 z m -96.08,0 -18.68,0.23 q -3.38,-7.65 -9,-10.8 -5.62,-3.38 -10.8,-3.38 0,0 -0.9,0 -0.9,0 -0.9,0 v -2.25 h 50.62 v 2.25 h -2.02 q -4.28,0 -7.65,3.6 -3.15,3.6 -0.68,10.35 z" />
       </g>
-    </svg>
-  </div>
+  </svg>
 
   <div class="noise" aria-hidden="true"></div>
 
-  <!-- Fester Kopfbereich: immer sichtbar, enthaelt nur zwei unsichtbare
-       Zielmarken. Logo und Button "docken" dort per Scroll-Animation an,
-       siehe .logo-fly / .cta-fly weiter unten. -->
+  <!-- Fester Kopfbereich: immer sichtbar, enthaelt zwei unsichtbare
+       Zielmarken. Der Button dockt dort per Scroll-Animation an (siehe
+       .cta-fly weiter unten und script.js), das Logo dockt dort als
+       Ziel der Intro-Choreographie an (siehe .intro-mark und intro.js). -->
   <header class="site-header">
     <div class="site-header-inner">
       <span class="header-slot header-slot-logo" data-header-logo-slot></span>
@@ -103,26 +108,20 @@
     </div>
   </header>
 
-  <!-- Die tatsaechlich sichtbaren, beweglichen Elemente. Fixiert positioniert,
-       ihre Position/Groesse wird per Scroll-Fortschritt berechnet (script.js).
-       Ohne JavaScript oder bei reduzierter Bewegung bleiben sie unsichtbar,
-       die Ankerpunkte in Intro und Hero uebernehmen dann die Anzeige. -->
-  <img class="logo-fly" data-logo-fly src="assets/logo.svg" alt="CRAVR" width="40" height="40">
+  <!-- Der fliegende Button: fixiert positioniert, Position/Groesse wird per
+       Scroll-Fortschritt berechnet (script.js). Ohne JavaScript oder bei
+       reduzierter Bewegung bleibt er unsichtbar, sein Anker im Hero
+       uebernimmt dann die Anzeige. -->
   <a class="ghost-button cta-fly" data-cta-fly href="#anmeldung">Platz sichern</a>
 
   <main>
 
-    <!-- Ein einziges Hero-Bild, zwei Zonen: oben ein kleiner Streifen nur fuer
-         das Logo (materialisiert beim Laden, danach automatischer Weiterscroll,
-         siehe script.js), darunter der eigentliche Hero mit Headline. Logo und
-         Button fliegen von hier aus in den festen Kopfbereich. -->
+    <!-- Hero: ein Bild, die Headline beginnt direkt darauf. Das Logo (siehe
+         .intro-mark oben im Body) liegt fuer den ersten Moment als eigene,
+         fixierte Schicht darueber und dockt danach in den Kopfbereich. -->
     <section class="hero" data-hero>
       <img class="hero-image" src="assets/hero-architektur.jpg" alt="" width="1536" height="1024">
       <div class="hero-scrim" aria-hidden="true"></div>
-
-      <div class="hero-logo-zone" data-intro-stage>
-        <img class="logo-anchor" data-logo-anchor src="assets/logo.svg" alt="CRAVR" width="130" height="130">
-      </div>
 
       <div class="hero-content">
         <h1 class="hero-headline">CRAVR kommt.</h1>

@@ -1,47 +1,49 @@
 /*
   Intro-Choreographie: dunkler Vollbild-Screen, auf dem sich Sanduhr, Lorbeerkranz
-  und Schriftzug gestaffelt aufbauen, danach Uebergang in die eigentliche Seite.
-  Aktivierung/Deaktivierung (No-JS, prefers-reduced-motion) laeuft ueber die
-  "intro-run"-Klasse auf <html>, siehe Inline-Script im <head> von index.html.
+  und Schriftzug gestaffelt aufbauen/zeichnen, danach dockt das fertige Logo in
+  die Kopfzeile (dorthin, wo auch das kleine Logo im Header sitzt). Scrollt man
+  wieder ganz nach oben, laeuft exakt dieselbe Bewegung rueckwaerts, gesteuert
+  von der Scroll-Position (kein Zeit-Ablauf, echtes Zurueckspulen).
 
-  Laeuft unabhaengig von der Flug-Animation in script.js (Logo/Button docken in
-  den Kopfbereich): dieses Overlay liegt nur optisch obendrauf (hoher z-index),
-  script.js misst und berechnet seine Positionen unveraendert im Hintergrund.
+  Aktivierung (No-JS, prefers-reduced-motion) laeuft ueber die "intro-run"-
+  Klasse auf <html>, siehe Inline-Script im <head> von index.html. Ohne diese
+  Klasse bleibt das SVG ein normales, bereits fertig gezeichnetes Element am
+  Seitenanfang (siehe Basis-Regeln in styles.css), dieses Skript tut dann nichts.
 */
 
 (function () {
+  "use strict";
+
   var html = document.documentElement;
-
-  function cleanup() {
-    html.classList.remove("intro-run");
-    var el = document.getElementById("intro");
-    if (el && el.parentNode) {
-      el.parentNode.removeChild(el);
-    }
-  }
-
-  // Notbremse: egal was unten passiert, die Seite darf nie laenger als ein
-  // paar Sekunden hinter dem Overlay haengen bleiben (z.B. bei einem Fehler
-  // in der restlichen Choreographie).
-  var safety = setTimeout(cleanup, 6500);
-
   if (!html.classList.contains("intro-run")) {
     return;
   }
 
-  var intro = document.getElementById("intro");
-  var mark = intro ? intro.querySelector(".intro-mark") : null;
-  if (!intro || !mark) {
-    cleanup();
+  var backdrop = document.getElementById("intro-backdrop");
+  var mark = document.getElementById("intro-mark");
+  var headerSlot = document.querySelector("[data-header-logo-slot]");
+  if (!backdrop || !mark || !headerSlot) {
+    html.classList.add("intro-scrollable");
     return;
   }
 
+  function clamp01(t) {
+    return t < 0 ? 0 : t > 1 ? 1 : t;
+  }
+  function lerp(a, b, t) {
+    return a + (b - a) * t;
+  }
+  function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+  function easeInOutCubic(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+
+  // ---- Zeichnen/Aufbauen: Reihenfolge und Timing, in ms innerhalb von REVEAL_MS. ----
   var PIECE_DURATION = 550;
   var DRAW_DURATION = 750;
-
-  // Reihenfolge/Timing der Choreographie. Jede Zeile: CSS-Selektor(en),
-  // Start-Verzoegerung der ersten Figur, Abstand zwischen den Figuren.
-  var timeline = [
+  var timelineSteps = [
     { selector: "#glas", delay: 0, stagger: 0 },
     {
       selector:
@@ -60,9 +62,10 @@
     },
   ];
 
-  var latestEnd = 0;
+  var items = [];
+  var revealEndMs = 0;
 
-  timeline.forEach(function (step) {
+  timelineSteps.forEach(function (step) {
     var els =
       typeof step.selector === "string"
         ? mark.querySelectorAll(step.selector)
@@ -73,44 +76,182 @@
     els.forEach(function (el, i) {
       if (!el) return;
       var isDraw = el.classList.contains("draw");
-      var duration = isDraw ? DRAW_DURATION : PIECE_DURATION;
-      var elDelay = step.delay + i * step.stagger;
-
+      var durationMs = isDraw ? DRAW_DURATION : PIECE_DURATION;
+      var startMs = step.delay + i * step.stagger;
+      var len = null;
       if (isDraw && typeof el.getTotalLength === "function") {
-        var length = el.getTotalLength();
-        el.style.strokeDasharray = length;
-        el.style.strokeDashoffset = length;
+        len = el.getTotalLength();
+        el.style.strokeDasharray = len;
+        // Sichtbarkeit haengt bei Draw-Elementen allein am Dashoffset, das
+        // CSS-Standard-opacity:0 (siehe styles.css) ist nur die Grundstellung
+        // vor dem Priming und muss hier aufgehoben werden.
+        el.style.opacity = 1;
       }
-
-      el.style.animationDelay = elDelay + "ms";
-      latestEnd = Math.max(latestEnd, elDelay + duration);
+      items.push({ el: el, isDraw: isDraw, startMs: startMs, durationMs: durationMs, len: len });
+      revealEndMs = Math.max(revealEndMs, startMs + durationMs);
     });
   });
 
-  // Erst jetzt (naechster Frame) die Animationen scharf schalten, damit der
-  // "ungezeichnete" Ausgangszustand sicher schon gesetzt ist.
-  requestAnimationFrame(function () {
-    requestAnimationFrame(function () {
-      mark.classList.add("is-active");
-    });
-  });
+  var REVEAL_MS = revealEndMs;
+  var HOLD_MS = 400;
+  var DOCK_MS = 700;
+  var TOTAL_MS = REVEAL_MS + HOLD_MS + DOCK_MS;
+  var REVEAL_FRACTION = REVEAL_MS / TOTAL_MS;
+  var DOCK_START_FRACTION = (REVEAL_MS + HOLD_MS) / TOTAL_MS;
 
-  setTimeout(function () {
-    mark.classList.add("intro-glow-pulse");
-  }, latestEnd + 150);
+  var geometry = {};
+  var SCROLL_SPAN = 480;
 
-  setTimeout(function () {
-    intro.classList.add("is-exiting");
-  }, latestEnd + 150 + 700 + 150);
+  function measure() {
+    // mark.offsetWidth waere hier nicht verlaesslich: <svg>-Wurzelelemente
+    // unterstuetzen offsetWidth/offsetHeight nicht durchgehend (das ist eine
+    // HTMLElement-Eigenschaft, kein SVGElement-Standard). getBoundingClientRect
+    // wiederum wuerde die bereits ANGEWENDETE transform-Skalierung mitmessen,
+    // sobald einmal gedockt wurde. Der berechnete CSS-Wert von "width" bleibt
+    // in beiden Faellen die verlaessliche, unverzerrte Basisgroesse.
+    var slotRect = headerSlot.getBoundingClientRect();
+    geometry = {
+      naturalSize: parseFloat(getComputedStyle(mark).width),
+      centerX: window.innerWidth / 2,
+      centerY: window.innerHeight / 2,
+      slotCenterX: slotRect.left + slotRect.width / 2,
+      slotCenterY: slotRect.top + slotRect.height / 2,
+      slotSize: slotRect.width || 40,
+    };
+    SCROLL_SPAN = Math.min(Math.max(window.innerHeight * 0.7, 420), 640);
+  }
 
-  intro.addEventListener(
-    "animationend",
-    function (event) {
-      if (event.target === intro) {
-        clearTimeout(safety);
-        cleanup();
+  // Zentrale Render-Funktion: bildet EINEN Fortschrittswert (0 = dunkler
+  // Screen, nichts gezeichnet; 1 = fertig gezeichnet und klein in der
+  // Kopfzeile angedockt) auf den kompletten sichtbaren Zustand ab. Wird
+  // sowohl vom Auto-Ablauf beim Laden als auch vom Scroll-Handler benutzt,
+  // das macht die Rueckwaerts-Bewegung zu einem echten Zurueckspulen statt
+  // einer zweiten, separaten Animation.
+  function render(progress) {
+    var revealT = clamp01(progress / REVEAL_FRACTION);
+    var elapsed = revealT * REVEAL_MS;
+
+    items.forEach(function (item) {
+      var localT = clamp01((elapsed - item.startMs) / item.durationMs);
+      if (item.isDraw) {
+        item.el.style.strokeDashoffset = lerp(item.len, 0, easeInOutCubic(localT));
+      } else {
+        var e = easeOutCubic(localT);
+        item.el.style.opacity = e;
+        item.el.style.transform = "scale(" + lerp(0.82, 1, e) + ")";
       }
-    },
-    { once: true }
-  );
+    });
+
+    var dockT = clamp01((progress - DOCK_START_FRACTION) / (1 - DOCK_START_FRACTION));
+    var dockEase = easeInOutCubic(dockT);
+
+    var half = geometry.naturalSize / 2;
+    var scale = lerp(1, geometry.slotSize / geometry.naturalSize, dockEase);
+    var x = lerp(geometry.centerX, geometry.slotCenterX, dockEase);
+    var y = lerp(geometry.centerY, geometry.slotCenterY, dockEase);
+    mark.style.transform =
+      "translate3d(" + (x - half) + "px," + (y - half) + "px,0) scale(" + scale + ")";
+
+    backdrop.style.opacity = String(1 - dockEase);
+    backdrop.style.pointerEvents = progress >= 0.999 ? "none" : "auto";
+  }
+
+  measure();
+  render(0);
+
+  // ---- Phase 1: automatischer Ablauf beim Laden, Scroll bleibt gesperrt
+  // (siehe html.intro-run body { overflow: hidden } in styles.css). Die
+  // Notbremse (safety) kann fruehe greifen als die eigentliche rAF-Schleife,
+  // wenn der Tab im Hintergrund gedrosselt wird (requestAnimationFrame
+  // ticked dort kaum/gar nicht, waehrend setTimeout trotzdem naeherungsweise
+  // an der realen Zeit bleibt). "autoplayActive" sorgt dafuer, dass eine
+  // spaeter doch noch nachtickende Schleife den bereits fertigen Zustand
+  // nicht wieder ueberschreibt. ----
+  var autoplayStart = null;
+  var autoplayActive = true;
+  var safety = setTimeout(finishAutoplay, TOTAL_MS + 2500);
+
+  function autoplayFrame(ts) {
+    if (!autoplayActive) return;
+    if (autoplayStart === null) autoplayStart = ts;
+    var progress = clamp01((ts - autoplayStart) / TOTAL_MS);
+    render(progress);
+    if (progress < 1) {
+      requestAnimationFrame(autoplayFrame);
+    } else {
+      finishAutoplay();
+    }
+  }
+  requestAnimationFrame(autoplayFrame);
+
+  var scrollingEnabled = false;
+
+  function finishAutoplay() {
+    autoplayActive = false;
+    if (scrollingEnabled) return;
+    scrollingEnabled = true;
+    clearTimeout(safety);
+    measure();
+    render(1);
+    html.classList.add("intro-scrollable");
+    attachScrollHandling();
+  }
+
+  // ---- Phase 2: an die Scroll-Position gekoppeltes Vor-/Zurueckspulen nahe
+  // dem Seitenanfang. Erst aktiv, nachdem einmal wirklich nach unten
+  // gescrollt wurde (sonst wuerde die Seite direkt nach dem automatischen
+  // Ablauf, noch bei scrollY 0, sofort wieder in den dunklen Screen
+  // zurueckspringen). ----
+  function attachScrollHandling() {
+    var hasLeftTop = false;
+    var docked = true; // Autoplay endete bereits vollstaendig angedockt.
+
+    function onScroll() {
+      var scrollY = window.scrollY;
+      if (!hasLeftTop) {
+        if (scrollY > SCROLL_SPAN) {
+          hasLeftTop = true;
+        } else {
+          return;
+        }
+      }
+      if (scrollY >= SCROLL_SPAN) {
+        if (docked) return; // schon im Endzustand gerendert, nichts zu tun
+        docked = true;
+        render(1);
+        return;
+      }
+      docked = false;
+      render(clamp01(scrollY / SCROLL_SPAN));
+    }
+
+    // Kein requestAnimationFrame hier: das wird in Hintergrund-/inaktiven
+    // Tabs stark gedrosselt oder ganz ausgesetzt, dann bliebe die Seite
+    // beim Zurueckscrollen im angedockten Zustand haengen. setTimeout mit
+    // fester Rate ist fuer diese leichte Berechnung (kurze Zahlenschleife
+    // ueber ~50 Elemente) voellig ausreichend.
+    var scrollTimer = null;
+    function requestFrame() {
+      if (scrollTimer) return;
+      scrollTimer = setTimeout(function () {
+        scrollTimer = null;
+        onScroll();
+      }, 16);
+    }
+
+    window.addEventListener("scroll", requestFrame, { passive: true });
+
+    var resizeTimer = null;
+    window.addEventListener(
+      "resize",
+      function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function () {
+          measure();
+          requestFrame();
+        }, 150);
+      },
+      { passive: true }
+    );
+  }
 })();
