@@ -20,7 +20,7 @@ const BREVO_LIST_ID = 5; // Liste "CRAVR Early Access" in Brevo
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_SECONDS = 300;
 
-const WORKER_VERSION = "2026-08-26-secure6";
+const WORKER_VERSION = "2026-09-15-price-brackets";
 
 function pickOrigin(request) {
   const origin = request.headers.get("Origin");

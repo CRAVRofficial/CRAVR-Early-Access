@@ -1,9 +1,13 @@
 /*
   Intro-Choreographie: dunkler Vollbild-Screen, auf dem sich Sanduhr, Lorbeerkranz
   und Schriftzug gestaffelt aufbauen/zeichnen, danach dockt das fertige Logo in
-  die Kopfzeile (dorthin, wo auch das kleine Logo im Header sitzt). Die Seite
-  scrollt danach ganz normal, Kopfzeile und "Platz sichern" bleiben ueberall
-  erreichbar.
+  die Kopfzeile (dorthin, wo auch das kleine Logo im Header sitzt). Ganz am Ende
+  des Andockens blendet die gezeichnete/gezogene Linien-Fassung (#intro-mark)
+  in die gefuellte Fassung (#intro-docked-logo, assets/logo.svg) über - die
+  Animation selbst bleibt dabei unveraendert, nur der Ruhezustand oben in der
+  Kopfzeile zeigt die gefuellte Version, weil sie bei 40px schaerfer wirkt als
+  duenne Linien. Die Seite scrollt danach ganz normal, Kopfzeile und "Platz
+  sichern" bleiben ueberall erreichbar.
 
   Zurueck zum dunklen Screen kommt man je nach Geraet unterschiedlich: am
   Desktop, wer an scrollY 0 mit Maus/Trackpad weiter nach oben scrollt
@@ -28,8 +32,9 @@
 
   var backdrop = document.getElementById("intro-backdrop");
   var mark = document.getElementById("intro-mark");
+  var dockedLogo = document.getElementById("intro-docked-logo");
   var headerSlot = document.querySelector("[data-header-logo-slot]");
-  if (!backdrop || !mark || !headerSlot) {
+  if (!backdrop || !mark || !dockedLogo || !headerSlot) {
     html.classList.add("intro-scrollable");
     return;
   }
@@ -154,8 +159,18 @@
     var scale = lerp(1, geometry.slotSize / geometry.naturalSize, dockEase);
     var x = lerp(geometry.centerX, geometry.slotCenterX, dockEase);
     var y = lerp(geometry.centerY, geometry.slotCenterY, dockEase);
-    mark.style.transform =
-      "translate3d(" + (x - half) + "px," + (y - half) + "px,0) scale(" + scale + ")";
+    var transform = "translate3d(" + (x - half) + "px," + (y - half) + "px,0) scale(" + scale + ")";
+    mark.style.transform = transform;
+    dockedLogo.style.transform = transform;
+
+    // Das gezeichnete/gezogene Logo bleibt fuer die ganze Animation und das
+    // Andocken unveraendert (Linien-Look). Erst ganz am Ende, wenn es schon
+    // in Position und Groesse angekommen ist, blendet ein zweites Element mit
+    // der gefuellten Logo-Fassung darueber ein - nur der Ruhezustand oben in
+    // der Kopfzeile zeigt die gefuellte Version, nicht die Animation selbst.
+    var swapT = clamp01((dockEase - 0.85) / 0.15);
+    mark.style.opacity = String(1 - swapT);
+    dockedLogo.style.opacity = String(swapT);
 
     backdrop.style.opacity = String(1 - dockEase);
     backdrop.style.pointerEvents = progress >= 0.999 ? "none" : "auto";
