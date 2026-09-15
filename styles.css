@@ -69,6 +69,10 @@ body {
   font-size: 17px;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
+  /* Verhindert das native Ueberzieh-/Bounce-Verhalten am oberen Rand, das
+     sonst mit der eigenen Zieh-Geste in intro.js (zurueck zum Intro)
+     konkurrieren wuerde. */
+  overscroll-behavior-y: none;
 }
 
 img {
@@ -120,7 +124,7 @@ html.intro-run .intro-backdrop {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: radial-gradient(ellipse at center, rgba(13, 31, 23, 0.55) 0%, rgba(10, 10, 10, 0.9) 62%, #0a0a0a 100%);
+  background: radial-gradient(ellipse at center, rgba(20, 48, 36, 0.95) 0%, rgba(10, 10, 10, 0.98) 35%, #0a0a0a 70%);
 }
 
 html.intro-run body {

@@ -1,9 +1,11 @@
 /*
   Intro-Choreographie: dunkler Vollbild-Screen, auf dem sich Sanduhr, Lorbeerkranz
   und Schriftzug gestaffelt aufbauen/zeichnen, danach dockt das fertige Logo in
-  die Kopfzeile (dorthin, wo auch das kleine Logo im Header sitzt). Scrollt man
-  wieder ganz nach oben, laeuft exakt dieselbe Bewegung rueckwaerts, gesteuert
-  von der Scroll-Position (kein Zeit-Ablauf, echtes Zurueckspulen).
+  die Kopfzeile (dorthin, wo auch das kleine Logo im Header sitzt). Die Seite
+  scrollt danach ganz normal, Kopfzeile und "Platz sichern" bleiben ueberall
+  erreichbar. Erst wer an scrollY 0 weiter nach oben zieht (Ueberziehen/Pull-
+  Geste, kein normaler Scroll mehr moeglich), holt exakt dieselbe Bewegung
+  rueckwaerts zurueck, bis wieder der dunkle Screen vom Laden dasteht.
 
   Aktivierung (No-JS, prefers-reduced-motion) laeuft ueber die "intro-run"-
   Klasse auf <html>, siehe Inline-Script im <head> von index.html. Ohne diese
@@ -100,7 +102,6 @@
   var DOCK_START_FRACTION = (REVEAL_MS + HOLD_MS) / TOTAL_MS;
 
   var geometry = {};
-  var SCROLL_SPAN = 480;
 
   function measure() {
     // mark.offsetWidth waere hier nicht verlaesslich: <svg>-Wurzelelemente
@@ -118,7 +119,6 @@
       slotCenterY: slotRect.top + slotRect.height / 2,
       slotSize: slotRect.width || 40,
     };
-    SCROLL_SPAN = Math.min(Math.max(window.innerHeight * 0.7, 420), 640);
   }
 
   // Zentrale Render-Funktion: bildet EINEN Fortschrittswert (0 = dunkler
@@ -194,62 +194,107 @@
     measure();
     render(1);
     html.classList.add("intro-scrollable");
-    attachScrollHandling();
+    attachPullHandling();
   }
 
-  // ---- Phase 2: an die Scroll-Position gekoppeltes Vor-/Zurueckspulen nahe
-  // dem Seitenanfang. Erst aktiv, nachdem einmal wirklich nach unten
-  // gescrollt wurde (sonst wuerde die Seite direkt nach dem automatischen
-  // Ablauf, noch bei scrollY 0, sofort wieder in den dunklen Screen
-  // zurueckspringen). ----
-  function attachScrollHandling() {
-    var hasLeftTop = false;
-    var docked = true; // Autoplay endete bereits vollstaendig angedockt.
+  // ---- Phase 2: Zieh-Geste am oberen Rand. Die Seite scrollt ab hier ganz
+  // normal (Kopfzeile mit Logo und "Platz sichern" bleiben durchgehend
+  // erreichbar, an jeder Scroll-Position). Nur wer an scrollY 0 weiter nach
+  // oben zieht/scrollt (Ueberziehen, wo eigentlich nichts mehr kommt), holt
+  // die Animation zurueck - wie einen Vorhang, den man aufzieht. Laesst man
+  // los, bevor er halb offen ist, faellt er wieder zu, sonst zieht er ganz auf.
+  // ----
+  function attachPullHandling() {
+    var PULL_SPAN = 380; // Zieh-Strecke in "Pixel-Aequivalent" bis voll offen
+    var pull = 0; // 0 = normaler, angedockter Zustand; 1 = ganz aufgezogen (dunkler Screen)
+    var settleTimer = null;
+    var settleAnim = null;
 
-    function onScroll() {
-      var scrollY = window.scrollY;
-      if (!hasLeftTop) {
-        if (scrollY > SCROLL_SPAN) {
-          hasLeftTop = true;
-        } else {
-          return;
-        }
+    function setPull(next) {
+      pull = clamp01(next);
+      render(1 - pull);
+    }
+
+    function cancelSettle() {
+      clearTimeout(settleTimer);
+      clearTimeout(settleAnim);
+      settleAnim = null;
+    }
+
+    // Nach einer kurzen Pause (Geste beendet) auf die naehere Seite einrasten,
+    // statt in einer halb offenen Zwischenposition haengen zu bleiben. Per
+    // setTimeout statt requestAnimationFrame gestuft (16ms je Schritt): rAF
+    // wird in Hintergrund-/inaktiven Tabs gedrosselt oder ganz ausgesetzt,
+    // dann bliebe der Vorhang auf halbem Weg haengen.
+    function scheduleSettle() {
+      clearTimeout(settleTimer);
+      settleTimer = setTimeout(settle, 140);
+    }
+
+    function settle() {
+      var target = pull >= 0.5 ? 1 : 0;
+      var start = pull;
+      var startTime = Date.now();
+      var DURATION = 260;
+      function step() {
+        var t = clamp01((Date.now() - startTime) / DURATION);
+        setPull(lerp(start, target, easeOutCubic(t)));
+        settleAnim = t < 1 ? setTimeout(step, 16) : null;
       }
-      if (scrollY >= SCROLL_SPAN) {
-        if (docked) return; // schon im Endzustand gerendert, nichts zu tun
-        docked = true;
-        render(1);
+      step();
+    }
+
+    function onWheel(e) {
+      if (window.scrollY > 0) {
+        if (pull > 0) setPull(0); // Seite wurde anderswo gescrollt, Geste verwerfen
         return;
       }
-      docked = false;
-      render(clamp01(scrollY / SCROLL_SPAN));
+      if (e.deltaY < 0 || pull > 0) {
+        e.preventDefault();
+        cancelSettle();
+        setPull(pull + -e.deltaY / PULL_SPAN);
+        scheduleSettle();
+      }
     }
 
-    // Kein requestAnimationFrame hier: das wird in Hintergrund-/inaktiven
-    // Tabs stark gedrosselt oder ganz ausgesetzt, dann bliebe die Seite
-    // beim Zurueckscrollen im angedockten Zustand haengen. setTimeout mit
-    // fester Rate ist fuer diese leichte Berechnung (kurze Zahlenschleife
-    // ueber ~50 Elemente) voellig ausreichend.
-    var scrollTimer = null;
-    function requestFrame() {
-      if (scrollTimer) return;
-      scrollTimer = setTimeout(function () {
-        scrollTimer = null;
-        onScroll();
-      }, 16);
+    var touchStartY = null;
+    var touchActive = false;
+
+    function onTouchStart(e) {
+      touchActive = window.scrollY <= 0;
+      touchStartY = touchActive ? e.touches[0].clientY : null;
     }
 
-    window.addEventListener("scroll", requestFrame, { passive: true });
+    function onTouchMove(e) {
+      if (!touchActive || window.scrollY > 0) {
+        touchActive = false;
+        return;
+      }
+      var delta = e.touches[0].clientY - touchStartY; // Finger nach unten = nach oben ziehen
+      if (delta > 0 || pull > 0) {
+        e.preventDefault();
+        cancelSettle();
+        setPull(delta / PULL_SPAN);
+      }
+    }
+
+    function onTouchEnd() {
+      if (!touchActive) return;
+      touchActive = false;
+      scheduleSettle();
+    }
+
+    window.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
 
     var resizeTimer = null;
     window.addEventListener(
       "resize",
       function () {
         clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(function () {
-          measure();
-          requestFrame();
-        }, 150);
+        resizeTimer = setTimeout(measure, 150);
       },
       { passive: true }
     );
