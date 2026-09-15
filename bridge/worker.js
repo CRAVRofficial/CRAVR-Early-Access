@@ -53,7 +53,7 @@ function isValidEmail(email) {
 
 // Nur die vier bekannten Auswahlwerte zulassen, damit ueber das Formular
 // kein beliebiger Text in das Brevo-Attribut geschrieben werden kann.
-const ALLOWED_PRICE_SIGNALS = ["unter_30", "30_50", "50_70", "ueber_70"];
+const ALLOWED_PRICE_SIGNALS = ["50_60", "60_70", "70_80", "80_90"];
 
 // Zaehlt die Anfragen pro IP. Ohne KV-Bindung wird nicht blockiert, damit die
 // Anmeldung nicht komplett ausfaellt, falls die Bindung fehlt.
