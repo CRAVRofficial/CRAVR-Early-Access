@@ -3,9 +3,14 @@
   und Schriftzug gestaffelt aufbauen/zeichnen, danach dockt das fertige Logo in
   die Kopfzeile (dorthin, wo auch das kleine Logo im Header sitzt). Die Seite
   scrollt danach ganz normal, Kopfzeile und "Platz sichern" bleiben ueberall
-  erreichbar. Erst wer an scrollY 0 weiter nach oben zieht (Ueberziehen/Pull-
-  Geste, kein normaler Scroll mehr moeglich), holt exakt dieselbe Bewegung
-  rueckwaerts zurueck, bis wieder der dunkle Screen vom Laden dasteht.
+  erreichbar.
+
+  Zurueck zum dunklen Screen kommt man je nach Geraet unterschiedlich: am
+  Desktop, wer an scrollY 0 mit Maus/Trackpad weiter nach oben scrollt
+  (Ueberziehen, wo eigentlich nichts mehr kommt), zieht die Animation wie
+  einen Vorhang zurueck. Auf Touch-Geraeten uebernimmt das native "Pull to
+  Refresh" des Browsers dieselbe Rolle (am oberen Rand nach unten ziehen
+  laedt die Seite neu), siehe attachPullHandling weiter unten.
 
   Aktivierung (No-JS, prefers-reduced-motion) laeuft ueber die "intro-run"-
   Klasse auf <html>, siehe Inline-Script im <head> von index.html. Ohne diese
@@ -257,37 +262,13 @@
       }
     }
 
-    var touchStartY = null;
-    var touchActive = false;
-
-    function onTouchStart(e) {
-      touchActive = window.scrollY <= 0;
-      touchStartY = touchActive ? e.touches[0].clientY : null;
-    }
-
-    function onTouchMove(e) {
-      if (!touchActive || window.scrollY > 0) {
-        touchActive = false;
-        return;
-      }
-      var delta = e.touches[0].clientY - touchStartY; // Finger nach unten = nach oben ziehen
-      if (delta > 0 || pull > 0) {
-        e.preventDefault();
-        cancelSettle();
-        setPull(delta / PULL_SPAN);
-      }
-    }
-
-    function onTouchEnd() {
-      if (!touchActive) return;
-      touchActive = false;
-      scheduleSettle();
-    }
-
+    // Auf Touch-Geraeten bewusst KEINE eigene Zieh-Simulation: das native
+    // "Pull to Refresh" des mobilen Browsers uebernimmt diese Rolle direkt
+    // (am oberen Rand nach unten ziehen laedt die Seite neu, der Auto-Ablauf
+    // beim Laden zeigt dann wieder den dunklen Screen von vorn). Kein
+    // touchmove/preventDefault noetig, das wuerde dem nativen Verhalten nur
+    // im Weg stehen.
     window.addEventListener("wheel", onWheel, { passive: false });
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: false });
-    window.addEventListener("touchend", onTouchEnd, { passive: true });
 
     var resizeTimer = null;
     window.addEventListener(

@@ -69,10 +69,6 @@ body {
   font-size: 17px;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
-  /* Verhindert das native Ueberzieh-/Bounce-Verhalten am oberen Rand, das
-     sonst mit der eigenen Zieh-Geste in intro.js (zurueck zum Intro)
-     konkurrieren wuerde. */
-  overscroll-behavior-y: none;
 }
 
 img {
@@ -124,7 +120,23 @@ html.intro-run .intro-backdrop {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: radial-gradient(ellipse at center, rgba(20, 48, 36, 0.95) 0%, rgba(10, 10, 10, 0.98) 35%, #0a0a0a 70%);
+  /* Solide Basis, kein Durchscheinen der Seite dahinter. Der gruene
+     Schimmer sitzt als eigene, dezent pulsierende Kreisflaeche obendrauf
+     (siehe ::before), statt Teil dieses Verlaufs zu sein. */
+  background: #0a0a0a;
+}
+
+html.intro-run .intro-backdrop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(20, 64, 46, 0.6) 0%, rgba(20, 64, 46, 0) 45%);
+  animation: intro-glow-pulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes intro-glow-pulse {
+  from { opacity: 0.55; }
+  to   { opacity: 1; }
 }
 
 html.intro-run body {
